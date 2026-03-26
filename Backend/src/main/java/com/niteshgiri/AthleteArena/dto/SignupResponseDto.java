@@ -1,6 +1,5 @@
 package com.niteshgiri.AthleteArena.dto;
 
-import jakarta.persistence.Entity;
 import lombok.*;
 
 @Getter

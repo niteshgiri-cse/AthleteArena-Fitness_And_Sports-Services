@@ -37,6 +37,7 @@ public class Media {
     private MediaCategory category;
 
     @ElementCollection
+    @Builder.Default
     @CollectionTable(name = "media_tags",joinColumns = @JoinColumn(name = "media_id"))
     @Column(name = "tag")
     private Set<String> tags=new HashSet<>();

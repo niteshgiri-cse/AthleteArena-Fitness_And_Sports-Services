@@ -1,6 +1,5 @@
 package com.niteshgiri.AthleteArena.dto;
 
-import jakarta.persistence.SecondaryTable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

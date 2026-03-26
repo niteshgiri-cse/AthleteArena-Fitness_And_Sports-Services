@@ -29,7 +29,7 @@ public class User implements UserDetails {
 
     @Column(unique = true, nullable = false)
     private String email;
-
+    @Builder.Default
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<RoleType> roles = new HashSet<>();
