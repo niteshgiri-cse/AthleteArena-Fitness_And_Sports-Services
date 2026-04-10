@@ -120,7 +120,7 @@ Athlete Arena is built using scalable, modern technologies for high performance 
 
 ## 🗄 Database
 
-### MySQL – athlete data storage
+### MongoDB – athlete data storage
 
 - Training logs  
 - Performance metrics  
