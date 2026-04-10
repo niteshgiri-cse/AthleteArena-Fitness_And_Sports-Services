@@ -1,6 +1,6 @@
 package com.niteshgiri.AthleteArena.config;
 
-import com.niteshgiri.AthleteArena.entity.User;
+import com.niteshgiri.AthleteArena.model.User;
 import com.niteshgiri.AthleteArena.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -2,21 +2,9 @@ spring:
   application:
     name: AthleteArena
 
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    open-in-view: false
-    properties:
-      hibernate:
-        format_sql: true
-    database-platform: org.hibernate.dialect.MySQLDialect
+  data:
+    mongodb:
+      uri: ${MONGO_URI}
 
   servlet:
     multipart:
@@ -36,4 +24,7 @@ cloudinary:
 
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+
+NEWS-API-KEY: ${NEWS_API_KEY}

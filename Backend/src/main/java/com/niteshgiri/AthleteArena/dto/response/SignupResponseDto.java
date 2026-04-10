@@ -1,4 +1,4 @@
-package com.niteshgiri.AthleteArena.dto;
+package com.niteshgiri.AthleteArena.dto.response;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SignupResponseDto {
-    private Long id;
+    private String id;
     private String name;
     private String jwt;
 }

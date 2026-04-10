@@ -1,4 +1,6 @@
 import { Routes, Route } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Navbar from "./components/layout/Navbar";
 import SportsCategories from "./Pages/Cotegory/SportsCategories";
 import Community from "./Pages/Community/Community";
@@ -18,22 +20,22 @@ export default function App() {
   return (
     <>
       <Navbar />
+      <ToastContainer position="top-right" autoClose={3000} />
       <Routes>
-        <Route path="/" element={<Home/>} />
+        <Route path="/" element={<Home />} />
         <Route path="/sport-category" element={<SportsCategories />} />
         <Route path="/community" element={<Community />} />
         <Route path="/recent-new" element={<RecentNews />} />
         <Route path="/live-events" element={<Event />} />
         <Route path="/services" element={<Services />} />
-
         <Route path="/learning-center" element={<LearningCenter />} />
         <Route path="/athlete-blogs" element={<AthleteBlogs />} />
         <Route path="/training-guides" element={<TrainingGuides />} />
-
         <Route path="/userProfile" element={<UserProfile />} />
-        <Route path="/auth" element={<Auth/>}/>
+        <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      <Footer />
     </>
   );
 }

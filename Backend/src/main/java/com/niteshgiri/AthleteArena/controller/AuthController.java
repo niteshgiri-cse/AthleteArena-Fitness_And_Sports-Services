@@ -1,9 +1,9 @@
 package com.niteshgiri.AthleteArena.controller;
 
-import com.niteshgiri.AthleteArena.dto.LoginRequestDto;
-import com.niteshgiri.AthleteArena.dto.LoginResponseDto;
-import com.niteshgiri.AthleteArena.dto.SignUpRequestDto;
-import com.niteshgiri.AthleteArena.dto.SignupResponseDto;
+import com.niteshgiri.AthleteArena.dto.request.LoginRequestDto;
+import com.niteshgiri.AthleteArena.dto.response.LoginResponseDto;
+import com.niteshgiri.AthleteArena.dto.request.SignUpRequestDto;
+import com.niteshgiri.AthleteArena.dto.response.SignupResponseDto;
 import com.niteshgiri.AthleteArena.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

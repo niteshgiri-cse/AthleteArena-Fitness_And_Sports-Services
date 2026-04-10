@@ -1,6 +1,6 @@
 package com.niteshgiri.AthleteArena.config;
 
-import com.niteshgiri.AthleteArena.entity.User;
+import com.niteshgiri.AthleteArena.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.Claims;

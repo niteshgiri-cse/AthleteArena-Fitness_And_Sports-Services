@@ -1,18 +1,16 @@
 package com.niteshgiri.AthleteArena.repository;
 
-import com.niteshgiri.AthleteArena.entity.Media;
-import com.niteshgiri.AthleteArena.entity.type.MediaType;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import com.niteshgiri.AthleteArena.model.MediaPost;
+import com.niteshgiri.AthleteArena.model.type.MediaType;
+import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface MediaRepository extends JpaRepository<Media,String>{
+public interface MediaRepository extends MongoRepository<MediaPost, String> {
 
-    List<Media> findByUser_Id(Long userId);
+    List<MediaPost> findByUserId(String userId);
 
-    List<Media> findByUser_IdAndMediaType(Long userId,MediaType mediaType);
+    List<MediaPost> findByUserIdAndMediaType(String userId, MediaType mediaType);
 
-    @Query("SELECT m FROM Media m JOIN FETCH m.user ORDER BY m.createdAt DESC")
-    List<Media> getFeed();
+    List<MediaPost> findAllByOrderByCreatedAtDesc();
 }

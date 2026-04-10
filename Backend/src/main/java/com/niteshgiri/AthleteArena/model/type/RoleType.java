@@ -1,4 +1,4 @@
-package com.niteshgiri.AthleteArena.entity.type;
+package com.niteshgiri.AthleteArena.model.type;
 
 public enum RoleType {
 

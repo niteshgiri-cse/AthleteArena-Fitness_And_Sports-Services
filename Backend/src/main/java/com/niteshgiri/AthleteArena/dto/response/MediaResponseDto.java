@@ -1,6 +1,9 @@
-package com.niteshgiri.AthleteArena.dto;
+package com.niteshgiri.AthleteArena.dto.response;
+
+import com.niteshgiri.AthleteArena.model.type.MediaCategory;
 import lombok.Builder;
 import lombok.Data;
+
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -13,8 +16,8 @@ public class MediaResponseDto {
     private String url;
     private String secureUrl;
     private String mediaType;
-    private Long userId;
-    private String category;
+    private String userId;
+    private Set<MediaCategory> categories;
     private Set<String> tags;
     private String title;
     private String description;

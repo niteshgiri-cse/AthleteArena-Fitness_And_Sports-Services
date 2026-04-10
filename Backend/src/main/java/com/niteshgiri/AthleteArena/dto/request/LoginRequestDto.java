@@ -1,4 +1,4 @@
-package com.niteshgiri.AthleteArena.dto;
+package com.niteshgiri.AthleteArena.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
