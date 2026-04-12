@@ -1,9 +1,11 @@
 package com.niteshgiri.AthleteArena.controller;
 
+import com.niteshgiri.AthleteArena.dto.response.FeedResponseDto;
 import com.niteshgiri.AthleteArena.dto.response.MediaResponseDto;
 import com.niteshgiri.AthleteArena.model.type.MediaCategory;
 import com.niteshgiri.AthleteArena.service.Interface.MediaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,24 +49,13 @@ public class MediaController {
         );
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<List<MediaResponseDto>> getMyMedia() {
-        return ResponseEntity.ok(mediaService.getMyMedia());
-    }
-
-    @GetMapping("/me/images")
-    public ResponseEntity<List<MediaResponseDto>> getMyImages() {
-        return ResponseEntity.ok(mediaService.getMyImages());
-    }
-
-    @GetMapping("/me/videos")
-    public ResponseEntity<List<MediaResponseDto>> getMyVideos() {
-        return ResponseEntity.ok(mediaService.getMyVideos());
-    }
 
     @GetMapping("/feed")
-    public ResponseEntity<List<MediaResponseDto>> getFeed() {
-        return ResponseEntity.ok(mediaService.getFeed());
+    public Page<FeedResponseDto> getFeed(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return mediaService.getFeed(page, size);
     }
 
     @DeleteMapping("/{mediaId}")

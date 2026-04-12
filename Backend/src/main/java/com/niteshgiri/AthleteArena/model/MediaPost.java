@@ -44,8 +44,6 @@ public class MediaPost {
     private Set<String> likes = new HashSet<>();
 
     private int commentCount;
-    private int viewCount;
-
     @CreatedDate
     private Instant createdAt;
 

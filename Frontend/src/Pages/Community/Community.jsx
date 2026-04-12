@@ -1,208 +1,167 @@
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Image, Video, Send } from "lucide-react";
+import PostCard from "./PostCard";
+import UploadModal from "./UploadModal";
+import { getFeed } from "@/api/mediaApi";
 
 export default function Community() {
   const [posts, setPosts] = useState([]);
   const [caption, setCaption] = useState("");
-  const [media, setMedia] = useState(null);
-  const [mediaType, setMediaType] = useState("");
-  const [commentInput, setCommentInput] = useState({});
 
-  // 🔹 File Upload
-  const handleFileChange = (e, type) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const [showModal, setShowModal] = useState(false);
+  const [type, setType] = useState("");
 
-    setMedia(URL.createObjectURL(file));
-    setMediaType(type);
-  };
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  // 🔹 Create Post
-  const handlePost = () => {
-    if (!caption && !media) return;
+  // ✅ LOAD POSTS (NO DUPLICATES)
+  const loadPosts = useCallback(async () => {
+    if (loading || !hasMore) return;
 
-    const newPost = {
-      id: Date.now(),
-      user: "You",
-      avatar: "https://i.pravatar.cc/100",
-      time: "Just now",
-      caption,
-      media,
-      mediaType,
-      likes: 0,
-      liked: false,
-      comments: [],
-      showComments: false,
+    setLoading(true);
+    try {
+      const res = await getFeed(page);
+
+      setPosts((prev) => {
+        const merged = [...prev, ...res.content];
+
+        // 🔥 REMOVE DUPLICATES
+        const unique = Array.from(
+          new Map(merged.map((item) => [item.id, item])).values()
+        );
+
+        return unique;
+      });
+
+      setPage((prev) => prev + 1);
+
+      if (res.last) setHasMore(false);
+
+    } catch (err) {
+      console.error("Feed error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, loading, hasMore]);
+
+  // INITIAL LOAD
+  useEffect(() => {
+    loadPosts();
+  }, []);
+
+  // INFINITE SCROLL
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop + 100 >=
+        document.documentElement.scrollHeight
+      ) {
+        loadPosts();
+      }
     };
 
-    setPosts([newPost, ...posts]);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loadPosts]);
+
+  // SEND BUTTON (NO FAKE POST)
+  const handleSend = () => {
+    if (!caption.trim()) return;
+
+    console.log("Caption:", caption);
     setCaption("");
-    setMedia(null);
   };
 
-  // 🔹 Like Toggle
-  const toggleLike = (id) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              liked: !post.liked,
-              likes: post.liked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
-      )
-    );
-  };
-
-  // 🔹 Add Comment
-  const addComment = (id) => {
-    const text = commentInput[id];
-    if (!text) return;
-
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === id
-          ? {
-              ...post,
-              comments: [...post.comments, { text }],
-            }
-          : post
-      )
-    );
-
-    setCommentInput({ ...commentInput, [id]: "" });
-  };
-
-  // 🔹 Toggle Comment Box
-  const toggleComments = (id) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.id === id
-          ? { ...post, showComments: !post.showComments }
-          : post
-      )
-    );
+  // REFRESH AFTER UPLOAD
+  const refreshFeed = () => {
+    setPosts([]);
+    setPage(0);
+    setHasMore(true);
+    loadPosts();
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4">
+    <div className="min-h-screen bg-slate-100 py-8 px-3">
       <div className="max-w-2xl mx-auto space-y-6">
 
-        <div className="bg-white p-4 rounded-2xl shadow-sm border">
-          <div className="flex gap-3">
-            <img src="https://i.pravatar.cc/100" className="h-10 w-10 rounded-full" />
+        {/* POST BOX */}
+        <div className="bg-white p-4 rounded-2xl shadow-sm border space-y-4">
+
+          <div className="flex gap-3 items-center">
+            <img
+              src="https://i.pravatar.cc/100"
+              className="h-10 w-10 rounded-full"
+            />
 
             <input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Share something..."
-              className="flex-1 bg-slate-100 rounded-full px-4 outline-none"
+              className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm"
             />
           </div>
 
-          {media && (
-            <div className="mt-3">
-              {mediaType === "image" ? (
-                <img src={media} className="w-full h-60 object-cover rounded-lg" />
-              ) : (
-                <video src={media} controls className="w-full h-60 rounded-lg" />
-              )}
+          <div className="flex justify-between items-center">
+
+            <div className="flex gap-4 text-gray-600 text-sm">
+              <button
+                onClick={() => {
+                  setType("image");
+                  setShowModal(true);
+                }}
+                className="flex gap-1 hover:text-indigo-500"
+              >
+                <Image size={18} /> Photo
+              </button>
+
+              <button
+                onClick={() => {
+                  setType("video");
+                  setShowModal(true);
+                }}
+                className="flex gap-1 hover:text-indigo-500"
+              >
+                <Video size={18} /> Video
+              </button>
             </div>
-          )}
 
-          <div className="flex justify-between mt-4">
-            <label className="cursor-pointer flex gap-2">
-              <Image /> Photo
-              <input type="file" hidden accept="image/*" onChange={(e) => handleFileChange(e, "image")} />
-            </label>
-
-            <label className="cursor-pointer flex gap-2">
-              <Video /> Video
-              <input type="file" hidden accept="video/*" onChange={(e) => handleFileChange(e, "video")} />
-            </label>
-
-            <button onClick={handlePost} className="bg-indigo-500 text-white px-4 py-1 rounded-full flex gap-1">
-              <Send /> Post
+            <button
+              onClick={handleSend}
+              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm"
+            >
+              <Send size={16} /> Post
             </button>
           </div>
         </div>
 
-        {/* 🔥 POSTS */}
+        {/* POSTS */}
         {posts.map((post) => (
-          <div key={post.id} className="bg-white rounded-2xl border">
-
-            {/* Header */}
-            <div className="flex items-center gap-3 p-4">
-              <img src={post.avatar} className="h-10 w-10 rounded-full" />
-              <div>
-                <h3>{post.user}</h3>
-                <p className="text-xs text-gray-500">{post.time}</p>
-              </div>
-            </div>
-
-            <p className="px-4">{post.caption}</p>
-
-            {/* Media */}
-            {post.mediaType === "image" ? (
-              <img src={post.media} className="w-full h-80 object-cover" />
-            ) : (
-              <video src={post.media} controls className="w-full h-80" />
-            )}
-
-            {/* Actions */}
-            <div className="flex justify-between px-6 py-3 text-sm">
-
-              <button onClick={() => toggleLike(post.id)}>
-                {post.liked ? "❤️" : "🤍"} {post.likes}
-              </button>
-
-              <button onClick={() => toggleComments(post.id)}>
-                💬 {post.comments.length}
-              </button>
-
-              <button
-                onClick={() => navigator.share?.({ text: post.caption })}
-              >
-                🔗 Share
-              </button>
-            </div>
-
-            {/* COMMENTS */}
-            {post.showComments && (
-              <div className="px-4 pb-3">
-
-                {post.comments.map((c, i) => (
-                  <p key={i} className="text-sm bg-slate-100 p-2 rounded mt-1">
-                    {c.text}
-                  </p>
-                ))}
-
-                <div className="flex gap-2 mt-2">
-                  <input
-                    value={commentInput[post.id] || ""}
-                    onChange={(e) =>
-                      setCommentInput({
-                        ...commentInput,
-                        [post.id]: e.target.value,
-                      })
-                    }
-                    placeholder="Write comment..."
-                    className="flex-1 border rounded px-2"
-                  />
-
-                  <button
-                    onClick={() => addComment(post.id)}
-                    className="text-indigo-500"
-                  >
-                    Send
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <PostCard
+            key={`${post.id}-${post.createdAt}`} // ✅ FIXED KEY
+            post={post}
+          />
         ))}
+
+        {loading && <p className="text-center text-gray-500">Loading...</p>}
+
+        {!hasMore && (
+          <p className="text-center text-gray-400 text-sm">
+            No more posts
+          </p>
+        )}
       </div>
+
+      {/* MODAL */}
+      {showModal && (
+        <UploadModal
+          type={type}
+          onClose={() => {
+            setShowModal(false);
+            refreshFeed();
+          }}
+        />
+      )}
     </div>
   );
 }

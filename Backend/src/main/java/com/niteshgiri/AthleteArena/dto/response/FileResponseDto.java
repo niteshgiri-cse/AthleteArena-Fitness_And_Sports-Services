@@ -1,11 +1,13 @@
 package com.niteshgiri.AthleteArena.dto.response;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ImageResponseDto {
+public class FileResponseDto {
 
     private String publicId;
     private String url;
@@ -13,4 +15,5 @@ public class ImageResponseDto {
     private String resourceType;
     private Long bytes;
     private String streamingUrl;
+    private String thumbnailUrl;
 }
