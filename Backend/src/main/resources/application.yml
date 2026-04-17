@@ -5,6 +5,8 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URI}
+    redis:
+      url: ${REDIS_URL:rediss://default:Er0R6Tc53iZ1oJanLKryFlQqs7kgbJnZ@redis-13083.c264.ap-south-1-1.ec2.cloud.redislabs.com:13083}
 
   servlet:
     multipart:

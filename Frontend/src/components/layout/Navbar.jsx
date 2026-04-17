@@ -18,10 +18,22 @@ const navigation = [
   { name: "Services", href: "/services" },
 ];
 
+const isTokenValid = (token) => {
+  try {
+    if (!token || token === "undefined" || token === "null") return false;
+    const decoded = JSON.parse(atob(token.split(".")[1]));
+    return decoded.exp * 1000 > Date.now();
+  } catch {
+    return false;
+  }
+};
+
 export default function Navbar() {
   const [openProfile, setOpenProfile] = useState(false);
 
-  // 🔥 BODY SCROLL LOCK
+  const token = localStorage.getItem("token");
+  const isLoggedIn = isTokenValid(token);
+
   useEffect(() => {
     document.body.style.overflow = openProfile ? "hidden" : "auto";
   }, [openProfile]);
@@ -33,7 +45,6 @@ export default function Navbar() {
           <div className="mx-auto max-w-7xl px-4">
             <div className="flex h-16 justify-between">
 
-              {/* LEFT */}
               <div className="flex items-center">
                 <div className="sm:hidden mr-2">
                   <DisclosureButton className="p-2 rounded-lg hover:bg-slate-100">
@@ -65,17 +76,25 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* RIGHT */}
               <div className="flex items-center space-x-3">
 
-                {/* Notification */}
                 <div className="relative p-2 rounded-full hover:bg-slate-100 cursor-pointer">
                   <BellIcon className="h-6 w-6 text-slate-600" />
                   <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                 </div>
 
+                {/* LOGIN BUTTON */}
+                {!isLoggedIn && (
+                  <NavLink
+                    to="/auth"
+                    className="px-4 py-2 rounded-full bg-black text-white text-sm"
+                  >
+                    Login
+                  </NavLink>
+                )}
+
                 {/* PROFILE BUTTON */}
-                {!openProfile && (
+                {isLoggedIn && !openProfile && (
                   <div
                     onClick={() => setOpenProfile(true)}
                     className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100"
@@ -96,20 +115,16 @@ export default function Navbar() {
         )}
       </Disclosure>
 
-      {/* 🔥 PORTAL DRAWER (FIXED ISSUE) */}
-      {openProfile &&
+      {isLoggedIn && openProfile &&
         createPortal(
           <>
-            {/* OVERLAY */}
             <div
               onClick={() => setOpenProfile(false)}
               className="fixed inset-0 bg-black/60 z-9998"
             />
 
-            {/* DRAWER */}
             <div className="fixed inset-y-0 right-0 w-[320px] bg-white z-9999 shadow-2xl transition-transform duration-300">
 
-              {/* HEADER */}
               <div className="flex items-center gap-3 p-4 border-b bg-white">
                 <img
                   src="https://i.pravatar.cc/150?img=12"
@@ -123,13 +138,12 @@ export default function Navbar() {
 
                 <button
                   onClick={() => setOpenProfile(false)}
-                  className="text-xl  cursor-pointer font-semibold"
+                  className="text-xl cursor-pointer font-semibold"
                 >
                   ✕
                 </button>
               </div>
 
-              {/* CONTENT */}
               <div className="p-4 space-y-3 bg-white">
 
                 <NavLink

@@ -30,11 +30,11 @@ public class UserController {
         List<MediaResponseDto> video=userService.userPost();
         return ResponseEntity.ok(video);
     }
-    @PostMapping("createProfile")
-    public ResponseEntity<UserProfileResponseDto> createProfile(@RequestBody @Valid UserProfileRequestDto userProfileRequestDto){
-       UserProfileResponseDto userProfileResponseDto= userService.createProfile(userProfileRequestDto);
-      return ResponseEntity.status(HttpStatus.CREATED).body(userProfileResponseDto);
-    }
+//    @PostMapping("/createProfile")
+//    public ResponseEntity<UserProfileResponseDto> createProfile(@RequestBody @Valid UserProfileRequestDto userProfileRequestDto){
+//       UserProfileResponseDto userProfileResponseDto= userService.createProfile(userProfileRequestDto);
+//      return ResponseEntity.status(HttpStatus.CREATED).body(userProfileResponseDto);
+//    }
 
 
 }

@@ -1,7 +1,9 @@
 package com.niteshgiri.AthleteArena.service.imp;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.niteshgiri.AthleteArena.dto.response.NewsArticleResponseDto;
 import com.niteshgiri.AthleteArena.service.Interface.NewsArticleService;
+import com.niteshgiri.AthleteArena.service.RedisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,26 +19,40 @@ public class NewsArticleServiceImpl implements NewsArticleService {
     @Value("${NEWS-API-KEY}")
     private String secretKey;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String NEWS_CACHE_KEY = "sports_news";
+
+    private final RestTemplate restTemplate;
+    private final RedisService redisService;
 
     @Override
     public List<NewsArticleResponseDto> getAllArticle() {
+
+        List<NewsArticleResponseDto> cached =
+                redisService.get(NEWS_CACHE_KEY, new TypeReference<List<NewsArticleResponseDto>>() {});
+
+        if (cached != null && !cached.isEmpty()) {
+            return cached;
+        }
+
         try {
             LocalDate today = LocalDate.now();
-            LocalDate fromDate = today.minusDays(15);
-            LocalDate toDate = today.minusDays(1);
+            LocalDate from = today.minusDays(15);
+            LocalDate to = today.minusDays(1);
 
             String url = "https://newsapi.org/v2/everything" +
                     "?q=sports OR olympics OR fitness OR competition" +
-                    "&from=" + fromDate +
-                    "&to=" + toDate +
+                    "&from=" + from +
+                    "&to=" + to +
                     "&sortBy=publishedAt" +
                     "&language=en" +
                     "&pageSize=20" +
                     "&apiKey=" + secretKey;
 
-            Map<String, Object> response =
-                    restTemplate.getForObject(url, Map.class);
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+            if (response == null || response.get("articles") == null) {
+                return Collections.emptyList();
+            }
 
             List<Map<String, Object>> articles =
                     (List<Map<String, Object>>) response.get("articles");
@@ -45,11 +61,10 @@ public class NewsArticleServiceImpl implements NewsArticleService {
             int id = 1;
 
             for (Map<String, Object> article : articles) {
-                if (article.get("urlToImage") == null || article.get("url") == null) {
-                    continue;
-                }
+                if (article.get("urlToImage") == null || article.get("url") == null) continue;
 
-                Map<String, Object> sourceMap = (Map<String, Object>) article.get("source");
+                Map<String, Object> source =
+                        (Map<String, Object>) article.get("source");
 
                 result.add(
                         NewsArticleResponseDto.builder()
@@ -58,12 +73,14 @@ public class NewsArticleServiceImpl implements NewsArticleService {
                                 .image((String) article.get("urlToImage"))
                                 .url((String) article.get("url"))
                                 .category("Sports")
-                                .source(sourceMap != null ? (String) sourceMap.get("name") : null)
+                                .source(source != null ? (String) source.get("name") : null)
                                 .author((String) article.get("author"))
                                 .publishedAt(formatDate((String) article.get("publishedAt")))
                                 .build()
                 );
             }
+
+            redisService.set(NEWS_CACHE_KEY, result, 43200L);
 
             return result;
 
