@@ -34,7 +34,6 @@ export default function App() {
   {/* Public */}
   <Route path="/" element={<Home />} />
   <Route path="/auth" element={<Auth />} />
-
   {/* 🔒 Protected group */}
   <Route element={<ProtectedRoute />}>
     <Route path="/userProfile" element={<UserProfile />} />

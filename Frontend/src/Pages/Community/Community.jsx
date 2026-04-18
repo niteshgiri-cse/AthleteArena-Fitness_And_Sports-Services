@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react"; // ✅ added useRef
 import { Image, Video, Send } from "lucide-react";
 import PostCard from "./PostCard";
 import UploadModal from "./UploadModal";
@@ -18,15 +18,15 @@ export default function Community() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  const observerRef = useRef(null); // ✅ new
+
   const dispatch = useDispatch();
   const { userProfile } = useSelector((state) => state.user || {});
 
-  // ✅ LOAD PROFILE IMAGE
   useEffect(() => {
     dispatch(getProfileAction());
   }, [dispatch]);
 
-  // ✅ LOAD POSTS
   const loadPosts = useCallback(async () => {
     if (loading || !hasMore) return;
 
@@ -36,16 +36,13 @@ export default function Community() {
 
       setPosts((prev) => {
         const merged = [...prev, ...res.content];
-
         const unique = Array.from(
           new Map(merged.map((item) => [item.id, item])).values()
         );
-
         return unique;
       });
 
       setPage((prev) => prev + 1);
-
       if (res.last) setHasMore(false);
     } catch (err) {
       console.error("Feed error:", err);
@@ -54,44 +51,65 @@ export default function Community() {
     }
   }, [page, loading, hasMore]);
 
+  // ✅ Initial load (unchanged behavior)
   useEffect(() => {
     loadPosts();
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (
-        window.innerHeight + document.documentElement.scrollTop + 100 >=
-        document.documentElement.scrollHeight
-      ) {
-        loadPosts();
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
   }, [loadPosts]);
 
-  const handleSend = () => {
+  // ✅ REPLACED SCROLL WITH OBSERVER (no UI change)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadPosts();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.unobserve(observerRef.current);
+      }
+    };
+  }, [loadPosts, hasMore, loading]);
+
+  const handleSend = async () => {
     if (!caption.trim()) return;
+
     console.log("Caption:", caption);
     setCaption("");
+
+    await refreshFeed();
   };
 
-  const refreshFeed = () => {
+  const refreshFeed = async () => {
     setPosts([]);
     setPage(0);
     setHasMore(true);
-    loadPosts();
+
+    setLoading(true);
+    try {
+      const res = await getFeed(0);
+      setPosts(res.content);
+      setPage(1);
+      if (res.last) setHasMore(false);
+    } catch (err) {
+      console.error("Feed error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 px-3">
       <div className="max-w-2xl mx-auto space-y-6">
 
-        {/* POST BOX */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border space-y-4">
-
           <div className="flex gap-3 items-center">
             <img
               src={
@@ -110,7 +128,6 @@ export default function Community() {
           </div>
 
           <div className="flex justify-between items-center">
-
             <div className="flex gap-4 text-gray-600 text-sm">
               <button
                 onClick={() => {
@@ -135,20 +152,22 @@ export default function Community() {
 
             <button
               onClick={handleSend}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm"
+              className="bg-indigo-500 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm"
             >
               <Send size={16} /> Post
             </button>
           </div>
         </div>
 
-        {/* POSTS */}
         {posts.map((post) => (
           <PostCard
             key={`${post.id}-${post.createdAt}`}
             post={post}
           />
         ))}
+
+        {/* ✅ invisible trigger (no UI change) */}
+        <div ref={observerRef} className="h-10" />
 
         {loading && (
           <p className="text-center text-gray-500">Loading...</p>
@@ -161,10 +180,10 @@ export default function Community() {
         )}
       </div>
 
-      {/* MODAL */}
       {showModal && (
         <UploadModal
           type={type}
+          setPosts={setPosts}
           onClose={() => {
             setShowModal(false);
             refreshFeed();

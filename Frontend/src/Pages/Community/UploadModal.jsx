@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
-import { uploadImage, uploadVideo } from "@/api/mediaApi"; // ✅ added
+import { uploadImage, uploadVideo } from "@/api/mediaApi";
 
 const CATEGORY_OPTIONS = [
   "SPORT",
@@ -22,8 +22,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
 
   const [tagInput, setTagInput] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-
-  // ✅ NEW STATES (added only)
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -57,7 +55,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
     return null;
   };
 
-  // 🔹 ADD TAG
   const addTag = (e) => {
     if (e.key === "Enter" && tagInput.trim()) {
       e.preventDefault();
@@ -71,7 +68,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
     }
   };
 
-  // 🔹 REMOVE TAG
   const removeTag = (tag) => {
     setForm({
       ...form,
@@ -79,7 +75,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
     });
   };
 
-  // 🔹 CATEGORY SELECT
   const toggleCategory = (cat) => {
     if (form.categories.includes(cat)) {
       setForm({
@@ -94,7 +89,7 @@ export default function UploadModal({ type, setPosts, onClose }) {
     }
   };
 
-  // ✅ FIXED UPLOAD FUNCTION
+  // ✅ ONLY FIX HERE
   const upload = async () => {
     const error = validateFile(form.file);
     if (error) {
@@ -103,8 +98,8 @@ export default function UploadModal({ type, setPosts, onClose }) {
     }
 
     setErrorMsg("");
-    setSuccessMsg(""); // ✅ reset success
-    setLoading(true); // ✅ start loading
+    setSuccessMsg("");
+    setLoading(true);
 
     try {
       const payload = {
@@ -123,17 +118,18 @@ export default function UploadModal({ type, setPosts, onClose }) {
         res = await uploadVideo(payload);
       }
 
-      // ✅ backend response add
-      setPosts((prev) => [res, ...prev]);
+      // ✅ SAFE CALL (fix)
+      if (typeof setPosts === "function") {
+        setPosts((prev) => [res, ...prev]);
+      }
 
-      setSuccessMsg("✅ Upload successful"); // ✅ success message
+      setSuccessMsg("✅ Upload successful");
 
       onClose();
-
     } catch (error) {
       setErrorMsg(error?.message || "Upload failed");
     } finally {
-      setLoading(false); // ✅ stop loading
+      setLoading(false);
     }
   };
 
@@ -145,9 +141,7 @@ export default function UploadModal({ type, setPosts, onClose }) {
           Upload {type === "image" ? "Image" : "Video"}
         </h2>
 
-        {/* FILE INPUT */}
         <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-indigo-500 transition">
-
           <UploadCloud className="w-10 h-10 text-gray-400 mb-2" />
 
           <p className="text-sm text-gray-500">
@@ -179,21 +173,18 @@ export default function UploadModal({ type, setPosts, onClose }) {
           />
         </label>
 
-        {/* ERROR MESSAGE */}
         {errorMsg && (
           <p className="text-red-500 text-sm text-center">
             {errorMsg}
           </p>
         )}
 
-        {/* ✅ SUCCESS MESSAGE */}
         {successMsg && (
           <p className="text-green-500 text-sm text-center">
             {successMsg}
           </p>
         )}
 
-        {/* TITLE */}
         <input
           placeholder="Title"
           className="w-full border p-2 rounded"
@@ -202,7 +193,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
           }
         />
 
-        {/* DESCRIPTION */}
         <textarea
           placeholder="Description"
           className="w-full border p-2 rounded"
@@ -211,7 +201,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
           }
         />
 
-        {/* CATEGORIES */}
         <div>
           <p className="text-sm font-medium mb-1">Categories</p>
           <div className="flex flex-wrap gap-2">
@@ -231,7 +220,6 @@ export default function UploadModal({ type, setPosts, onClose }) {
           </div>
         </div>
 
-        {/* TAG INPUT */}
         <div>
           <input
             placeholder="Add tags (press Enter)"
@@ -254,18 +242,16 @@ export default function UploadModal({ type, setPosts, onClose }) {
           </div>
         </div>
 
-        {/* BUTTONS */}
         <div className="flex justify-between items-center pt-2">
           <button onClick={onClose} className="text-gray-600 font-semibold">
             Cancel
           </button>
 
-          {/* ✅ BUTTON FIX */}
           <button
             onClick={upload}
             disabled={loading}
             className="bg-indigo-500 active:scale-95 text-white px-4 py-2 rounded-lg"
-          > 
+          >
             {loading ? "Uploading..." : "Upload"}
           </button>
         </div>
