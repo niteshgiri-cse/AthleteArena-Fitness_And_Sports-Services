@@ -45,14 +45,3 @@ export const getMyPostAction = () => async (dispatch) => {
     dispatch(fetchUserFailure(error?.response?.data || error.message));
   }
 };
-
-// // ===== CREATE POST =====
-// export const createPostAction = (data) => async (dispatch) => {
-//   try {
-//     dispatch(fetchUser());
-//     await createPost(data);
-//     dispatch(getMyPostAction());
-//   } catch (error) {
-//     dispatch(fetchUserFailure(error?.response?.data || error.message));
-//   }
-// };

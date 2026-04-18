@@ -11,7 +11,6 @@ import com.niteshgiri.AthleteArena.repository.UserProfileRepository;
 import com.niteshgiri.AthleteArena.repository.UserRepository;
 import com.niteshgiri.AthleteArena.service.Interface.UserService;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -22,43 +21,33 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final MediaRepository mediaRepository;
-    private final ModelMapper modelMapper;
 
-    private String getUserEmail(){
+    private String getUserEmail() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
     @Override
     public UserProfileResponseDto getUserProfile() {
-        String email=getUserEmail();
-    User user= userRepository.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("User not found"));
-    UserProfile userProfile=userProfileRepository.findByUserId(user.getId()).orElseThrow(()-> new UsernameNotFoundException(
-            "user" +
-            " " +
-            "Profile" +
-            " not" +
-            " exist"));
-        return UserProfileResponseDto.builder()
+        User user = userRepository.findByEmail(getUserEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-                .name(userProfile.getName())
-                .email(user.getEmail())
-                .bio(userProfile.getBio())
-                .sport(userProfile.getSport())
-                .profileImageUrl(userProfile.getProfileImageUrl())
-                .followingCount(userProfile.getFollowingCount())
-                .followersCount(userProfile.getFollowersCount())
-                .createdAt(userProfile.getCreatedAt())
-                .build();
+        UserProfile profile = userProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new UsernameNotFoundException("User Profile not exist"));
+
+        return mapToDto(user, profile);
     }
 
     @Override
     public List<MediaResponseDto> userPost() {
-        User user=userRepository.findByEmail(getUserEmail()).orElseThrow(()-> new UsernameNotFoundException("user " +
-                "not found "));
-        List<MediaPost> mediaPosts=mediaRepository.findByUserId(user.getId());
+        User user = userRepository.findByEmail(getUserEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("user not found"));
+
+        List<MediaPost> mediaPosts = mediaRepository.findByUserId(user.getId());
+
         return mediaPosts.stream()
                 .map(media -> MediaResponseDto.builder()
                         .id(media.getId())
@@ -68,32 +57,63 @@ public class UserServiceImpl implements UserService {
                         .tags(media.getTags())
                         .title(media.getTitle())
                         .description(media.getDescription())
-                        .createdAt(
-                                LocalDateTime.ofInstant(
-                                        media.getCreatedAt(),
-                                        java.time.ZoneId.systemDefault()
-                                )
-                        )
+                        .createdAt(LocalDateTime.ofInstant(
+                                media.getCreatedAt(),
+                                java.time.ZoneId.systemDefault()))
                         .build())
                 .toList();
     }
 
+    @Override
+    public UserProfileResponseDto updateUserProfile(UserProfileRequestDto dto) {
+
+        User user = userRepository.findByEmail(getUserEmail())
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+
+        UserProfile profile = userProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new IllegalArgumentException("User Profile not exist"));
+
+        if (dto.getName() != null) {
+            profile.setName(dto.getName());
+        }
+        if (dto.getBio() != null) {
+            profile.setBio(dto.getBio());
+        }
+        if (dto.getProfileImageUrl() != null) {
+            profile.setProfileImageUrl(dto.getProfileImageUrl());
+        }
+        if (dto.getBackgroundImageUrl() != null) {
+            profile.setBackgroundImageUrl(dto.getBackgroundImageUrl());
+        }
+        if (dto.getTags() != null) {
+            profile.setTags(dto.getTags());
+        }
+
+        userProfileRepository.save(profile);
+
+        return mapToDto(user, profile);
+    }
 
     @Override
-    public UserProfileResponseDto createProfile(UserProfileRequestDto userProfileRequestDto) {
-        User user=userRepository.findByEmail(getUserEmail()).orElseThrow(()-> new UsernameNotFoundException("User not" +
-                " exist"));
-        UserProfile userProfile=UserProfile.builder()
+    public void createProfile(User user) {
+        UserProfile userProfile = UserProfile.builder()
                 .userId(user.getId())
-                .name(userProfileRequestDto.getName())
-                .bio(userProfileRequestDto.getBio())
-                .sport(userProfileRequestDto.getSport())
-                .username(userProfileRequestDto.getUsername())
-                .profileImageUrl(userProfileRequestDto.getProfileImageUrl())
-                .followersCount(0)
-                .followingCount(0)
+                .name(user.getName())
                 .build();
-        UserProfile userProfile1=userProfileRepository.save(userProfile);
-     return  modelMapper.map(userProfile1,UserProfileResponseDto.class);
+
+        userProfileRepository.save(userProfile);
+    }
+
+    private UserProfileResponseDto mapToDto(User user, UserProfile profile) {
+        return UserProfileResponseDto.builder()
+                .name(profile.getName())
+                .email(user.getEmail())
+                .bio(profile.getBio())
+                .profileImageUrl(profile.getProfileImageUrl())
+                .backgroundImageUrl(profile.getBackgroundImageUrl())
+                .followersCount(profile.getFollowers().size())
+                .followingCount(profile.getFollowing().size())
+                .createdAt(profile.getCreatedAt())
+                .build();
     }
 }

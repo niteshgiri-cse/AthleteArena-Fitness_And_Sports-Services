@@ -15,8 +15,8 @@ public class UserProfileResponseDto {
     private String name;
     private String email;
     private String bio;
-    private String sport;
     private String profileImageUrl;
+    private String backgroundImageUrl;
     private int followersCount;
     private int followingCount;
     private Instant createdAt;

@@ -9,6 +9,9 @@ import { BellIcon } from "lucide-react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 
+import { useSelector, useDispatch } from "react-redux";
+import { getProfileAction } from "@/redux/features/user/userAction";
+
 const navigation = [
   { name: "Home", href: "/" },
   { name: "Category", href: "/sport-category" },
@@ -31,12 +34,25 @@ const isTokenValid = (token) => {
 export default function Navbar() {
   const [openProfile, setOpenProfile] = useState(false);
 
+  const dispatch = useDispatch();
+  const { userProfile } = useSelector((state) => state.user || {});
+
   const token = localStorage.getItem("token");
   const isLoggedIn = isTokenValid(token);
 
   useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(getProfileAction());
+    }
+  }, [dispatch, isLoggedIn]);
+
+  useEffect(() => {
     document.body.style.overflow = openProfile ? "hidden" : "auto";
   }, [openProfile]);
+
+  const profileImage =
+    userProfile?.profileImageUrl ||
+    "https://i.pravatar.cc/150?img=12";
 
   return (
     <>
@@ -83,7 +99,6 @@ export default function Navbar() {
                   <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                 </div>
 
-                {/* LOGIN BUTTON */}
                 {!isLoggedIn && (
                   <NavLink
                     to="/auth"
@@ -93,14 +108,13 @@ export default function Navbar() {
                   </NavLink>
                 )}
 
-                {/* PROFILE BUTTON */}
                 {isLoggedIn && !openProfile && (
                   <div
                     onClick={() => setOpenProfile(true)}
                     className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100"
                   >
                     <img
-                      src="https://i.pravatar.cc/150?img=12"
+                      src={profileImage}
                       className="h-9 w-9 rounded-full"
                     />
                     <span className="hidden sm:block text-sm font-medium">
@@ -127,12 +141,12 @@ export default function Navbar() {
 
               <div className="flex items-center gap-3 p-4 border-b bg-white">
                 <img
-                  src="https://i.pravatar.cc/150?img=12"
+                  src={profileImage}
                   className="h-10 w-10 rounded-full"
                 />
 
                 <div className="flex-1">
-                  <p className="font-semibold t">My Profile</p>
+                  <p className="font-semibold">My Profile</p>
                   <p className="text-sm text-slate-500">User Panel</p>
                 </div>
 

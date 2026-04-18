@@ -4,6 +4,9 @@ import PostCard from "./PostCard";
 import UploadModal from "./UploadModal";
 import { getFeed } from "@/api/mediaApi";
 
+import { useSelector, useDispatch } from "react-redux";
+import { getProfileAction } from "@/redux/features/user/userAction";
+
 export default function Community() {
   const [posts, setPosts] = useState([]);
   const [caption, setCaption] = useState("");
@@ -15,7 +18,15 @@ export default function Community() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // ✅ LOAD POSTS (NO DUPLICATES)
+  const dispatch = useDispatch();
+  const { userProfile } = useSelector((state) => state.user || {});
+
+  // ✅ LOAD PROFILE IMAGE
+  useEffect(() => {
+    dispatch(getProfileAction());
+  }, [dispatch]);
+
+  // ✅ LOAD POSTS
   const loadPosts = useCallback(async () => {
     if (loading || !hasMore) return;
 
@@ -26,7 +37,6 @@ export default function Community() {
       setPosts((prev) => {
         const merged = [...prev, ...res.content];
 
-        // 🔥 REMOVE DUPLICATES
         const unique = Array.from(
           new Map(merged.map((item) => [item.id, item])).values()
         );
@@ -37,7 +47,6 @@ export default function Community() {
       setPage((prev) => prev + 1);
 
       if (res.last) setHasMore(false);
-
     } catch (err) {
       console.error("Feed error:", err);
     } finally {
@@ -45,12 +54,10 @@ export default function Community() {
     }
   }, [page, loading, hasMore]);
 
-  // INITIAL LOAD
   useEffect(() => {
     loadPosts();
   }, []);
 
-  // INFINITE SCROLL
   useEffect(() => {
     const handleScroll = () => {
       if (
@@ -65,15 +72,12 @@ export default function Community() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [loadPosts]);
 
-  // SEND BUTTON (NO FAKE POST)
   const handleSend = () => {
     if (!caption.trim()) return;
-
     console.log("Caption:", caption);
     setCaption("");
   };
 
-  // REFRESH AFTER UPLOAD
   const refreshFeed = () => {
     setPosts([]);
     setPage(0);
@@ -90,7 +94,10 @@ export default function Community() {
 
           <div className="flex gap-3 items-center">
             <img
-              src="https://i.pravatar.cc/100"
+              src={
+                userProfile?.profileImageUrl ||
+                "https://i.pravatar.cc/100"
+              }
               className="h-10 w-10 rounded-full"
             />
 
@@ -138,12 +145,14 @@ export default function Community() {
         {/* POSTS */}
         {posts.map((post) => (
           <PostCard
-            key={`${post.id}-${post.createdAt}`} // ✅ FIXED KEY
+            key={`${post.id}-${post.createdAt}`}
             post={post}
           />
         ))}
 
-        {loading && <p className="text-center text-gray-500">Loading...</p>}
+        {loading && (
+          <p className="text-center text-gray-500">Loading...</p>
+        )}
 
         {!hasMore && (
           <p className="text-center text-gray-400 text-sm">

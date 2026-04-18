@@ -8,6 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @Document(collection = "user_Profile")
 @Getter
@@ -23,13 +25,12 @@ public class UserProfile {
     private String userId;
     @NotBlank(message = "Enter you name ")
     private String name;
-    @Indexed(unique = true)
-    private String username;
     private String bio;
-    private String sport;
     private String profileImageUrl;
-    private int followersCount;
-    private int followingCount;
+    private String backgroundImageUrl;
+    private Set<String> followers=new HashSet<>();
+    private Set<String> following=new HashSet<>();
+    private Set<String> tags=new HashSet<>();
     @CreatedDate
     private Instant createdAt;
 }
