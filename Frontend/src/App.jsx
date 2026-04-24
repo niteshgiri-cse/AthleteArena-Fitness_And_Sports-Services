@@ -25,6 +25,7 @@ import Reports from "./Pages/Admin/Reports";
 
 import PageNotFound from "./Pages/NotFound/PageNotFound";
 import UserProfile from "./Pages/UserProfile/UserProfile";
+import GoLive from "./Pages/GoLive/GoLive";
 
 export default function App() {
   return (
@@ -32,7 +33,6 @@ export default function App() {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <Routes>
-
         {/* 🌐 PUBLIC WITHOUT NAVBAR */}
         <Route path="/auth" element={<Auth />} />
 
@@ -41,16 +41,17 @@ export default function App() {
           <Route path="/" element={<Home />} />
         </Route>
 
-        {/* 🔒 USER ROUTES (WITH NAVBAR) */}
         <Route element={<ProtectedRoute />}>
+        <Route path="/live/:roomId" element={<GoLive />} />
           <Route element={<MainLayout />}>
+            <Route path="/" element={<Home />} />
             <Route path="/userProfile" element={<UserProfile />} />
             <Route path="/sport-category" element={<SportsCategories />} />
             <Route path="/community" element={<Community />} />
             <Route path="/recent-new" element={<RecentNews />} />
             <Route path="/live-events" element={<Event />} />
             <Route path="/services" element={<Services />} />
-            <Route path="/learning-center" element={<LearningCenter />} />
+            <Route path="/live-learning" element={<LearningCenter />} />
             <Route path="/athlete-blogs" element={<AthleteBlogs />} />
             <Route path="/training-guides" element={<TrainingGuides />} />
           </Route>
@@ -69,7 +70,6 @@ export default function App() {
 
         {/* ❌ 404 */}
         <Route path="*" element={<PageNotFound />} />
-
       </Routes>
     </>
   );

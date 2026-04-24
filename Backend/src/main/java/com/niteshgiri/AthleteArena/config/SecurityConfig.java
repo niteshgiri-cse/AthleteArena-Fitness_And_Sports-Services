@@ -23,6 +23,7 @@ public class SecurityConfig {
                         .requestMatchers("/public/**", "/auth/**").permitAll()
                         .requestMatchers("/api/**").permitAll()
                         .requestMatchers("/news/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/media/**").authenticated()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()

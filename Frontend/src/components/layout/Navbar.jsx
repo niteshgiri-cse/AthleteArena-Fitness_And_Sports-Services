@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { BellIcon } from "lucide-react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { NavLink } from "react-router-dom";
+import { href, NavLink } from "react-router-dom";
 
 import { useSelector, useDispatch } from "react-redux";
 import { getProfileAction } from "@/redux/features/user/userAction";
@@ -17,8 +17,9 @@ const navigation = [
   { name: "Category", href: "/sport-category" },
   { name: "Community", href: "/community" },
   { name: "Recent News", href: "/recent-new" },
-  { name: "Live Events", href: "/live-events" },
+  { name: "Events", href: "/live-events" },
   { name: "Services", href: "/services" },
+  {name:"Live",href:"/live-learning"}
 ];
 
 const isTokenValid = (token) => {
