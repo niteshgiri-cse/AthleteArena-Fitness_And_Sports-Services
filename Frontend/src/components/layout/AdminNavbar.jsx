@@ -6,6 +6,7 @@ import {
   FiCalendar,
   FiBarChart2,
   FiLogOut,
+  FiUpload, // 👈 change this
 } from "react-icons/fi";
 
 const menuItems = [
@@ -14,6 +15,7 @@ const menuItems = [
   { name: "Register Events", path: "/admin/register-event", icon: <FiUser /> },
   { name: "Manage Users", path: "/admin/bookings", icon: <FiCalendar /> },
   { name: "Reports", path: "/admin/reports", icon: <FiBarChart2 /> },
+  { name: "Upload Course", path: "/admin/upload-course", icon: <FiUpload /> }, 
 ];
 
 export default function AdminNavbar() {

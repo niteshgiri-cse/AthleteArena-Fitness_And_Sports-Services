@@ -26,6 +26,8 @@ import Reports from "./Pages/Admin/Reports";
 import PageNotFound from "./Pages/NotFound/PageNotFound";
 import UserProfile from "./Pages/UserProfile/UserProfile";
 import GoLive from "./Pages/GoLive/GoLive";
+import AdminUpload from "./Pages/Admin/AdminUpload";
+import CoursePlayer from "./Pages/LearningCenter/CoursePlayer";
 
 export default function App() {
   return (
@@ -52,6 +54,7 @@ export default function App() {
             <Route path="/live-events" element={<Event />} />
             <Route path="/services" element={<Services />} />
             <Route path="/live-learning" element={<LearningCenter />} />
+            <Route path="/course/:id" element={<CoursePlayer />} />
             <Route path="/athlete-blogs" element={<AthleteBlogs />} />
             <Route path="/training-guides" element={<TrainingGuides />} />
           </Route>
@@ -65,6 +68,7 @@ export default function App() {
             <Route path="register-event" element={<RegisterEvent />} />
             <Route path="bookings" element={<ManageUsers />} />
             <Route path="reports" element={<Reports />} />
+            <Route path="upload-course" element={<AdminUpload/>}/>
           </Route>
         </Route>
 
