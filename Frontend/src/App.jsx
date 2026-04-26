@@ -35,16 +35,18 @@ export default function App() {
       <ToastContainer position="top-right" autoClose={3000} />
 
       <Routes>
-        {/* 🌐 PUBLIC WITHOUT NAVBAR */}
+
+        {/* 🔓 PUBLIC */}
         <Route path="/auth" element={<Auth />} />
 
-        {/* 🌐 PUBLIC WITH NAVBAR */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-        </Route>
-
+        {/* 🔐 PROTECTED */}
         <Route element={<ProtectedRoute />}>
-        <Route path="/live/:roomId" element={<GoLive />} />
+
+          {/* 🎥 FULLSCREEN (NO NAVBAR + NO FOOTER) */}
+          <Route path="/course/:id" element={<CoursePlayer />} />
+          <Route path="/live/:roomId" element={<GoLive />} />
+
+          {/* 🌐 NORMAL APP (WITH NAVBAR + FOOTER) */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/userProfile" element={<UserProfile />} />
@@ -54,13 +56,13 @@ export default function App() {
             <Route path="/live-events" element={<Event />} />
             <Route path="/services" element={<Services />} />
             <Route path="/live-learning" element={<LearningCenter />} />
-            <Route path="/course/:id" element={<CoursePlayer />} />
             <Route path="/athlete-blogs" element={<AthleteBlogs />} />
             <Route path="/training-guides" element={<TrainingGuides />} />
           </Route>
+
         </Route>
 
-        {/* 🛠 ADMIN (NO MAIN NAVBAR) */}
+        {/* 🛠 ADMIN */}
         <Route element={<ProtectedRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
@@ -68,12 +70,13 @@ export default function App() {
             <Route path="register-event" element={<RegisterEvent />} />
             <Route path="bookings" element={<ManageUsers />} />
             <Route path="reports" element={<Reports />} />
-            <Route path="upload-course" element={<AdminUpload/>}/>
+            <Route path="upload-course" element={<AdminUpload />} />
           </Route>
         </Route>
 
         {/* ❌ 404 */}
         <Route path="*" element={<PageNotFound />} />
+
       </Routes>
     </>
   );

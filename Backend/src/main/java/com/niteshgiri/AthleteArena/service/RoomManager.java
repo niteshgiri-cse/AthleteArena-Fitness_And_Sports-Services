@@ -26,9 +26,32 @@ public class RoomManager {
                 ? session.getId()
                 : userId;
 
-        // 🔥 remove old session for same user
-        sessionUserMap.entrySet().removeIf(e -> e.getValue().equals(finalUserId));
+        // ✅ FIX: properly remove old session of same user
+        sessionUserMap.entrySet().removeIf(e -> {
+            if (e.getValue().equals(finalUserId)) {
 
+                String oldSessionId = e.getKey();
+                String oldRoom = sessionRoomMap.get(oldSessionId);
+
+                if (oldRoom != null) {
+                    Map<String, WebSocketSession> roomMap = rooms.get(oldRoom);
+                    if (roomMap != null) {
+                        roomMap.remove(finalUserId);
+
+                        // remove room if empty
+                        if (roomMap.isEmpty()) {
+                            rooms.remove(oldRoom);
+                        }
+                    }
+                }
+
+                sessionRoomMap.remove(oldSessionId);
+                return true;
+            }
+            return false;
+        });
+
+        // ✅ add user to room
         rooms.computeIfAbsent(room, k -> new ConcurrentHashMap<>())
                 .put(finalUserId, session);
 
