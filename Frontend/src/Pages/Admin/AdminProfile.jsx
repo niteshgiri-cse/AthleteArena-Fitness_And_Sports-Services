@@ -15,10 +15,21 @@ const AdminProfile = () => {
     phone: "+91 9876543210",
     location: "Kanpur, India",
     role: "Super Admin",
+    avatar: "https://i.pravatar.cc/150?img=12",
   });
 
+  /* 🔹 Handle text change */
   const handleChange = (e) => {
     setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  /* 🔹 Handle image upload */
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file); // preview
+      setUser({ ...user, avatar: imageUrl });
+    }
   };
 
   return (
@@ -47,14 +58,31 @@ const AdminProfile = () => {
       {/* 🔷 GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* 🧱 LEFT CARD (ONLY SUMMARY) */}
-        <div className="bg-linear-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
-          
+        {/* 🧱 LEFT CARD */}
+        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
+
           <div className="text-center">
-            <img
-              src="https://i.pravatar.cc/150?img=12"
-              className="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-md"
-            />
+
+            {/* ✅ IMAGE WITH UPLOAD */}
+            <div className="relative w-24 h-24 mx-auto">
+              <img
+                src={user.avatar}
+                alt="profile"
+                className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
+              />
+
+              {edit && (
+                <label className="absolute bottom-0 right-0 bg-white text-black p-1 rounded-full cursor-pointer shadow">
+                  📷
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
 
             <h2 className="mt-4 text-lg font-semibold">
               {user.name}
@@ -65,7 +93,7 @@ const AdminProfile = () => {
             </span>
           </div>
 
-          {/* 🔥 Stats (better use instead of duplicate info) */}
+          {/* 🔥 STATS */}
           <div className="mt-6 grid grid-cols-2 gap-4 text-center">
             <div>
               <p className="text-lg font-bold">1,240</p>

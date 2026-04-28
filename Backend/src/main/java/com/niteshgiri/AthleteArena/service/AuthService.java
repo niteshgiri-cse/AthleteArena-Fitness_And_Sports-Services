@@ -7,6 +7,7 @@ import com.niteshgiri.AthleteArena.dto.request.SignUpRequestDto;
 import com.niteshgiri.AthleteArena.dto.response.SignupResponseDto;
 import com.niteshgiri.AthleteArena.model.User;
 import com.niteshgiri.AthleteArena.model.type.RoleType;
+import com.niteshgiri.AthleteArena.model.type.UserStatus;
 import com.niteshgiri.AthleteArena.repository.UserRepository;
 import com.niteshgiri.AthleteArena.service.Interface.UserService;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class AuthService {
         User user = new User();
         user.setName(signUpRequestDto.getName());
         user.setEmail(signUpRequestDto.getEmail());
+        user.setStatus(UserStatus.ACTIVE);
         user.setPassword(passwordEncoder.encode(signUpRequestDto.getPassword()));
         user.setRoles(Collections.singleton(RoleType.valueOf("USER")));
         User savedUser = userRepository.save(user);

@@ -1,6 +1,7 @@
 package com.niteshgiri.AthleteArena.model;
 
 import com.niteshgiri.AthleteArena.model.type.RoleType;
+import com.niteshgiri.AthleteArena.model.type.UserStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -35,7 +36,7 @@ public class User implements UserDetails {
     @NotBlank(message = "Password is required")
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
-
+    private UserStatus status;
     @Builder.Default
     private Set<RoleType> roles = new HashSet<>();
 
