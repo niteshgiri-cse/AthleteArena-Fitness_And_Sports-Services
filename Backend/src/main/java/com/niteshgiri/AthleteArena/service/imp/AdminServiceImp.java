@@ -1,5 +1,6 @@
 package com.niteshgiri.AthleteArena.service.imp;
 
+
 import com.niteshgiri.AthleteArena.dto.request.AdminCourseRequestDto;
 import com.niteshgiri.AthleteArena.dto.request.AdminEventRequestDto;
 import com.niteshgiri.AthleteArena.dto.request.AdminProfileRequestDto;
@@ -23,12 +24,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
-
 
 @Service
 @PreAuthorize("hasRole('ADMIN')")
@@ -58,7 +58,8 @@ public class AdminServiceImp implements AdminService {
     }
 
     @Override
-    public AdminEventResponseDto createEvent(AdminEventRequestDto dto) {
+    @Transactional
+    public EventResponseDto createEvent(AdminEventRequestDto dto) {
 
         String imageUrl = null;
         String publicId = null;
@@ -85,11 +86,12 @@ public class AdminServiceImp implements AdminService {
 
         Event saved = eventRepository.save(event);
 
-        return modelMapper.map(saved, AdminEventResponseDto.class);
+        return modelMapper.map(saved, EventResponseDto.class);
     }
 
     @Override
-    public AdminCourseResponseDto createCourse(AdminCourseRequestDto dto) {
+    @Transactional
+    public CourseResponseDto createCourse(AdminCourseRequestDto dto) {
 
         String thumbnailUrl = null;
         String publicId = null;
@@ -108,32 +110,31 @@ public class AdminServiceImp implements AdminService {
         course.setCourseTitle(dto.getCourseTitle());
         course.setVideoTitle(dto.getVideoTitle());
         course.setPublicId(publicId);
+        course.setVideoId(dto.getVideoId());
         course.setVideoLink(dto.getVideoLink());
         course.setThumbnail(thumbnailUrl);
         course.setTags(dto.getTags());
 
         Course saved = courseRepository.save(course);
 
-        return modelMapper.map(saved, AdminCourseResponseDto.class);
+        return modelMapper.map(saved, CourseResponseDto.class);
     }
 
     @Override
+    @Transactional
     public AdminRegisterResponseDto registerNewAdmin(AdminRegisterRequestDto dto) {
 
-        // 1. Check user exist karta hai ya nahi
+
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 2. Check already admin hai ya nahi
         if (user.getRoles().contains(RoleType.ADMIN)) {
             throw new RuntimeException("User is already an admin");
         }
 
-        // 3. Role update karo
         user.getRoles().add(RoleType.ADMIN);
         userRepository.save(user);
 
-        // 4. Admin profile create karo
         Admin admin = Admin.builder()
                 .adminId(generateCustomId())
                 .name(dto.getName())
@@ -143,7 +144,6 @@ public class AdminServiceImp implements AdminService {
 
         Admin savedAdmin = adminRepository.save(admin);
 
-        // 5. Response prepare karo
         AdminRegisterResponseDto response = new AdminRegisterResponseDto();
         response.setId(savedAdmin.getId());
         response.setAdminId(savedAdmin.getAdminId());
@@ -162,7 +162,7 @@ public class AdminServiceImp implements AdminService {
             dto.setName(user1.getName());
             dto.setEmail(user1.getEmail());
             dto.setRole(user1.getRoles().toString());
-            dto.setStatus(user1.getStatus().toString()!=null ? user1.getStatus().toString() : UserStatus.INACTIVE.toString());
+            dto.setStatus(user1.getStatus()!=null ? user1.getStatus().toString() : UserStatus.INACTIVE.toString());
             return dto;
         }).toList();
     }
@@ -173,7 +173,6 @@ public class AdminServiceImp implements AdminService {
         User user = userRepository.findByEmail(getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // 🔥 TRY TO FIND ADMIN
         Admin admin = adminRepository.findByEmail(user.getEmail()).orElse(null);
 
         String imageUrl = null;
@@ -234,5 +233,112 @@ public class AdminServiceImp implements AdminService {
                 .location(saved.getLocation())
                 .build();
     }
+    @Override
+    @Transactional
+    public void deleteCourse(String videoId) throws IOException {
 
+        Course course = courseRepository.findByVideoId(videoId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        // 🔥 DELETE IMAGE FROM CLOUDINARY FIRST
+        if (course.getPublicId() != null) {
+            cloudinaryMediaService.deleteMedia(course.getPublicId(), "image");
+        }
+
+        // 🔥 DELETE FROM DB
+        courseRepository.delete(course);
+    }
+    @Override
+    @Transactional
+    public CourseResponseDto updateCourse(String videoId, AdminCourseRequestDto dto) {
+
+        Course course = courseRepository.findByVideoId(videoId)
+                .orElseThrow(() -> new RuntimeException("Course not found"));
+
+        String thumbnailUrl = course.getThumbnail();
+        String publicId = course.getPublicId();
+
+        try {
+            // 🔥 IF NEW IMAGE → DELETE OLD + UPLOAD NEW
+            if (dto.getThumbnail() != null && !dto.getThumbnail().isEmpty()) {
+
+                if (publicId != null) {
+                    cloudinaryMediaService.deleteMedia(publicId, "image");
+                }
+
+                var upload = cloudinaryMediaService.uploadImage(dto.getThumbnail());
+                thumbnailUrl = upload.getSecureUrl();
+                publicId = upload.getPublicId();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Thumbnail update failed");
+        }
+
+        // UPDATE FIELDS
+        if (dto.getCourseTitle() != null) course.setCourseTitle(dto.getCourseTitle());
+        if (dto.getVideoTitle() != null) course.setVideoTitle(dto.getVideoTitle());
+        if (dto.getVideoLink() != null) course.setVideoLink(dto.getVideoLink());
+        if (dto.getTags() != null) course.setTags(dto.getTags());
+
+        course.setThumbnail(thumbnailUrl);
+        course.setPublicId(publicId);
+
+        Course updated = courseRepository.save(course);
+
+        return modelMapper.map(updated, CourseResponseDto.class);
+    }
+    @Override
+    @Transactional
+    public void deleteEvent(String eventId) throws IOException {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        // 🔥 DELETE IMAGE FROM CLOUDINARY
+        if (event.getPublicId() != null) {
+            cloudinaryMediaService.deleteMedia(event.getPublicId(), "image");
+        }
+
+        eventRepository.delete(event);
+    }
+    @Override
+    @Transactional
+    public EventResponseDto updateEvent(String eventId, AdminEventRequestDto dto) {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        String imageUrl = event.getImageUrl();
+        String publicId = event.getPublicId();
+
+        try {
+            if (dto.getImageUrl() != null && !dto.getImageUrl().isEmpty()) {
+
+                if (publicId != null) {
+                    cloudinaryMediaService.deleteMedia(publicId, "image");
+                }
+
+                var upload = cloudinaryMediaService.uploadImage(dto.getImageUrl());
+                imageUrl = upload.getSecureUrl();
+                publicId = upload.getPublicId();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Event image update failed");
+        }
+
+        // UPDATE FIELDS
+        if (dto.getTitle() != null) event.setTitle(dto.getTitle());
+        if (dto.getDataAndTime() != null) event.setDataAndTime(dto.getDataAndTime());
+        if (dto.getLocation() != null) event.setLocation(dto.getLocation());
+        if (dto.getStatus() != null) event.setStatus(dto.getStatus());
+        if (dto.getRegistrationFees() != 0) event.setRegistrationFees(dto.getRegistrationFees());
+        if (dto.getCapacity() != 0) event.setCapacity(dto.getCapacity());
+
+        event.setImageUrl(imageUrl);
+        event.setPublicId(publicId);
+
+        Event updated = eventRepository.save(event);
+
+        return modelMapper.map(updated, EventResponseDto.class);
+    }
 }

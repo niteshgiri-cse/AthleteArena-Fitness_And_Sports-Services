@@ -1,9 +1,14 @@
 package com.niteshgiri.AthleteArena.dto.response;
 
-import lombok.Data;
+import lombok.*;
+
 import java.time.LocalDateTime;
-@Data
-public class AdminEventResponseDto {
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EventResponseDto {
     private String id;
     private String title;
     private LocalDateTime dataAndTime;

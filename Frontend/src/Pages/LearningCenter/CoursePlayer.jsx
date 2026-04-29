@@ -5,7 +5,7 @@ const courseData = {
   1: {
     title: "Football Training Course",
     videos: [
-      { id: 1, title: "Introduction", youtubeId: "dQw4w9WgXcQ" },
+      { id: 1, title: "Introduction", youtubeId: "j-NhORwJDb4" },
       { id: 2, title: "Warmup Training", youtubeId: "3JZ_D3ELwOQ" },
       { id: 3, title: "Dribbling Skills", youtubeId: "LXb3EKWsInQ" },
     ],
