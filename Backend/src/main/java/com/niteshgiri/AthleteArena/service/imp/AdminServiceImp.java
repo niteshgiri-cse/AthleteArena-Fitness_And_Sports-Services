@@ -23,6 +23,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,7 @@ public class AdminServiceImp implements AdminService {
     private final CloudinaryMediaService cloudinaryMediaService;
     private  final EventRepository eventRepository;
     private final CourseRepository courseRepository;
-
+    private final PasswordEncoder passwordEncoder;
     private final ModelMapper modelMapper;
    private String getEmail(){
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -124,10 +125,21 @@ public class AdminServiceImp implements AdminService {
     @Transactional
     public AdminRegisterResponseDto registerNewAdmin(AdminRegisterRequestDto dto) {
 
+        User user = userRepository.findByEmail(dto.getEmail()).orElse(null);
 
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        // 🔥 CREATE USER IF NOT EXISTS
+        if (user == null) {
+            user = new User();
+            user.setName(dto.getName());
+            user.setEmail(dto.getEmail());
 
+            // ✅ ENCODE PASSWORD
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+
+            user.setStatus(UserStatus.ACTIVE);
+        }
+
+        // 🔥 CHECK ADMIN ROLE
         if (user.getRoles().contains(RoleType.ADMIN)) {
             throw new RuntimeException("User is already an admin");
         }
@@ -144,27 +156,45 @@ public class AdminServiceImp implements AdminService {
 
         Admin savedAdmin = adminRepository.save(admin);
 
-        AdminRegisterResponseDto response = new AdminRegisterResponseDto();
-        response.setId(savedAdmin.getId());
-        response.setAdminId(savedAdmin.getAdminId());
-        response.setName(savedAdmin.getName());
-        response.setEmail(savedAdmin.getEmail());
-        response.setRole(savedAdmin.getRole());
-
-        return response;
+        return AdminRegisterResponseDto.builder()
+                .id(savedAdmin.getId())
+                .adminId(savedAdmin.getAdminId())
+                .name(savedAdmin.getName())
+                .email(savedAdmin.getEmail())
+                .role(savedAdmin.getRole())
+                .build();
     }
 
     @Override
     public List<AdminUserDetailsResponseDto> getUserDetails() {
-        List<User> user=userRepository.findAll();
-        return user.stream().map(user1->{
-            AdminUserDetailsResponseDto dto=new AdminUserDetailsResponseDto();
-            dto.setName(user1.getName());
-            dto.setEmail(user1.getEmail());
-            dto.setRole(user1.getRoles().toString());
-            dto.setStatus(user1.getStatus()!=null ? user1.getStatus().toString() : UserStatus.INACTIVE.toString());
-            return dto;
-        }).toList();
+
+        return userRepository.findAll()
+                .stream()
+                .map(user -> {
+                    AdminUserDetailsResponseDto dto = new AdminUserDetailsResponseDto();
+                    dto.setId(user.getId());
+                    dto.setName(user.getName());
+                    dto.setEmail(user.getEmail());
+
+                    dto.setRole(
+                            user.getRoles() != null && !user.getRoles().isEmpty()
+                                    ? user.getRoles().stream()
+                                    .map(Enum::name)
+                                    .findFirst()
+                                    .orElse("USER")
+                                    : "USER"
+                    );
+
+                    // ✅ FIX STATUS (safe default)
+                    dto.setStatus(
+                            user.getStatus() != null
+                                    ? user.getStatus().name()
+                                    : UserStatus.ACTIVE.name()
+                    );
+
+                    return dto;
+                })
+                .toList();
     }
 
     @Override

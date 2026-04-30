@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FiPlus,
   FiEdit2,
@@ -9,16 +9,17 @@ import {
   FiX,
 } from "react-icons/fi";
 
+import { useDispatch, useSelector } from "react-redux";
+import {
+  registerAdminAction,
+  getUsersDetailsAction,
+} from "@/redux/features/Admin/adminActions";
+
 const ManageUsers = () => {
-  const [admins, setAdmins] = useState([
-    {
-      id: 1,
-      name: "Super Admin",
-      email: "admin@mail.com",
-      role: "super",
-      status: "active",
-    },
-  ]);
+  const dispatch = useDispatch();
+
+  // ✅ REDUX STATE
+  const { users = [], loading } = useSelector((state) => state.admin);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -27,91 +28,105 @@ const ManageUsers = () => {
   const [editId, setEditId] = useState(null);
   const [showPass, setShowPass] = useState(false);
 
+  // ✅ FORM (ONLY REQUIRED FIELDS)
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    role: "moderator",
-    status: "active",
   });
 
-  // INPUT
+  // ================= FETCH USERS =================
+  useEffect(() => {
+    dispatch(getUsersDetailsAction());
+  }, [dispatch]);
+
+  // ================= INPUT =================
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  // CREATE / UPDATE
-  const handleSubmit = (e) => {
+  // ================= CREATE ADMIN =================
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.name || !form.email || !form.password) return;
 
-    if (editId) {
-      setAdmins((prev) =>
-        prev.map((a) =>
-          a.id === editId ? { ...form, id: editId } : a
-        )
+    try {
+      await dispatch(
+        registerAdminAction({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        })
       );
-    } else {
-      setAdmins([...admins, { ...form, id: Date.now() }]);
-    }
 
-    reset();
+      alert("✅ Admin created successfully");
+
+      dispatch(getUsersDetailsAction()); // refresh list
+      reset();
+    } catch (err) {
+      console.error(err);
+      alert("❌ Failed to create admin");
+    }
   };
 
+  // ================= RESET =================
   const reset = () => {
     setForm({
       name: "",
       email: "",
       password: "",
-      role: "moderator",
-      status: "active",
     });
     setEditId(null);
     setOpen(false);
   };
 
-  // EDIT
+  // ================= EDIT =================
   const handleEdit = (a) => {
-    setForm(a);
+    setForm({
+      name: a.name || "",
+      email: a.email || "",
+      password: "",
+    });
     setEditId(a.id);
     setOpen(true);
   };
 
-  // DELETE
+  // ================= DELETE (UI only) =================
   const handleDelete = (id) => {
-    if (!window.confirm("Delete admin?")) return;
-    setAdmins(admins.filter((a) => a.id !== id));
+    alert("Delete API not connected yet");
   };
 
-  // BLOCK
+  // ================= BLOCK (UI only) =================
   const toggleStatus = (id) => {
-    setAdmins((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? { ...a, status: a.status === "active" ? "disabled" : "active" }
-          : a
-      )
-    );
+    alert("Status API not connected yet");
   };
 
-  // FILTER
-  const filtered = admins.filter((a) => {
-    const matchSearch = a.name.toLowerCase().includes(search.toLowerCase());
+  // ================= FILTER (FIXED) =================
+  const filtered = users.filter((a) => {
+    const matchSearch = a.name
+      ?.toLowerCase()
+      .includes(search.toLowerCase());
+
+    const status = (a.status || "ACTIVE").toLowerCase();
 
     const matchFilter =
       filter === "all"
         ? true
         : filter === "active"
-        ? a.status === "active"
-        : a.status === "disabled";
+        ? status === "active"
+        : status === "disabled";
 
     return matchSearch && matchFilter;
   });
 
-  // 📊 STATS
-  const total = admins.length;
-  const active = admins.filter((a) => a.status === "active").length;
-  const disabled = admins.filter((a) => a.status === "disabled").length;
+  // ================= STATS =================
+  const total = users.length;
+  const active = users.filter(
+    (a) => (a.status || "ACTIVE") === "ACTIVE"
+  ).length;
+  const disabled = users.filter(
+    (a) => a.status === "DISABLED"
+  ).length;
 
   return (
     <div className="p-6 bg-slate-100 min-h-screen space-y-6">
@@ -173,23 +188,16 @@ const ManageUsers = () => {
               <tr key={a.id} className="border-t">
                 <td className="p-3">{a.name}</td>
                 <td>{a.email}</td>
+                <td>{a.role}</td>
 
                 <td>
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    a.role === "super"
-                      ? "bg-indigo-100 text-indigo-600"
-                      : "bg-gray-100"
-                  }`}>
-                    {a.role}
-                  </span>
-                </td>
-
-                <td>
-                  <span className={`px-2 py-1 text-xs rounded ${
-                    a.status === "active"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-red-100 text-red-600"
-                  }`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${
+                      a.status === "ACTIVE"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
                     {a.status}
                   </span>
                 </td>
@@ -211,6 +219,8 @@ const ManageUsers = () => {
             ))}
           </tbody>
         </table>
+
+        {loading && <p className="p-4">Loading...</p>}
       </div>
 
       {/* MODAL */}
@@ -225,11 +235,22 @@ const ManageUsers = () => {
 
             <form onSubmit={handleSubmit} className="space-y-3">
 
-              <input name="name" value={form.name} onChange={handleChange} placeholder="Name" className="w-full border p-2 rounded" />
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="Name"
+                className="w-full border p-2 rounded"
+              />
 
-              <input name="email" value={form.email} onChange={handleChange} placeholder="Email" className="w-full border p-2 rounded" />
+              <input
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Email"
+                className="w-full border p-2 rounded"
+              />
 
-              {/* PASSWORD */}
               <div className="relative">
                 <input
                   type={showPass ? "text" : "password"}
@@ -247,11 +268,6 @@ const ManageUsers = () => {
                 </span>
               </div>
 
-              <select name="role" value={form.role} onChange={handleChange} className="w-full border p-2 rounded">
-                <option value="moderator">Moderator</option>
-                <option value="super">Super Admin</option>
-              </select>
-
               <button className="w-full bg-indigo-600 text-white py-2 rounded">
                 Save Admin
               </button>
@@ -260,13 +276,14 @@ const ManageUsers = () => {
           </div>
         </div>
       )}
+
     </div>
   );
 };
 
-/* STAT */
+// STAT CARD
 const Stat = ({ title, value }) => (
-  <div className="bg-linear-to-r from-indigo-500 to-purple-600 text-white p-5 rounded-xl">
+  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white p-5 rounded-xl">
     <p className="text-sm">{title}</p>
     <h3 className="text-xl font-bold">{value}</h3>
   </div>
