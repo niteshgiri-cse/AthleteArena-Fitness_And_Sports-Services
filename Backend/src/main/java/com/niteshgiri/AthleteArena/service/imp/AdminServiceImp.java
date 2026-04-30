@@ -184,8 +184,6 @@ public class AdminServiceImp implements AdminService {
                                     .orElse("USER")
                                     : "USER"
                     );
-
-                    // ✅ FIX STATUS (safe default)
                     dto.setStatus(
                             user.getStatus() != null
                                     ? user.getStatus().name()

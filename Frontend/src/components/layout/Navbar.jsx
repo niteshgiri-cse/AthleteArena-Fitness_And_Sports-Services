@@ -11,7 +11,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 
 import { useSelector, useDispatch } from "react-redux";
-import { getProfileAction } from "@/redux/features/user/userAction";
+import { getProfileAction } from "@/redux/features/user/userActions";
 
 const navigation = [
   { name: "Home", href: "/" },

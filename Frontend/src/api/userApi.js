@@ -19,11 +19,24 @@ export const getProfile = async () => {
 };
 
 export const updateProfile = async (data) => {
-  // 🔥 FIXED URL
   return (await publicAPI.put("/user/update-profile", data)).data;
 };
 
 // ===== POSTS =====
 export const getMyPosts = async () => {
   return (await publicAPI.get("/user/posts")).data;
+};
+
+// ✅ UPDATE POST
+export const updatePost = async (postId, formData) => {
+  return (
+    await publicAPI.put(`/user/update-post/${postId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+  ).data;
+};
+
+// ✅ DELETE POST
+export const deletePost = async (postId) => {
+  return (await publicAPI.delete(`/user/delete-post/${postId}`)).data;
 };

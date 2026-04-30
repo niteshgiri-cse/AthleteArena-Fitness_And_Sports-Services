@@ -5,7 +5,7 @@ import UploadModal from "./UploadModal";
 import { getFeed } from "@/api/mediaApi";
 
 import { useSelector, useDispatch } from "react-redux";
-import { getProfileAction } from "@/redux/features/user/userAction";
+import { getProfileAction } from "@/redux/features/user/userActions";
 
 export default function Community() {
   const [posts, setPosts] = useState([]);

@@ -1,6 +1,8 @@
 package com.niteshgiri.AthleteArena.service.imp;
 
 import com.niteshgiri.AthleteArena.dto.request.UserProfileRequestDto;
+import com.niteshgiri.AthleteArena.dto.request.VideoRequestDto;
+import com.niteshgiri.AthleteArena.dto.response.FileResponseDto;
 import com.niteshgiri.AthleteArena.dto.response.MediaResponseDto;
 import com.niteshgiri.AthleteArena.dto.response.UserProfileResponseDto;
 import com.niteshgiri.AthleteArena.model.MediaPost;
@@ -9,6 +11,7 @@ import com.niteshgiri.AthleteArena.model.UserProfile;
 import com.niteshgiri.AthleteArena.repository.MediaRepository;
 import com.niteshgiri.AthleteArena.repository.UserProfileRepository;
 import com.niteshgiri.AthleteArena.repository.UserRepository;
+import com.niteshgiri.AthleteArena.service.Interface.CloudinaryMediaService;
 import com.niteshgiri.AthleteArena.service.Interface.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +28,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final MediaRepository mediaRepository;
+    private final CloudinaryMediaService cloudinaryMediaService;
 
     private String getUserEmail() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
@@ -102,6 +106,99 @@ public class UserServiceImpl implements UserService {
                 .build();
 
         userProfileRepository.save(userProfile);
+    }
+
+    @Override
+    public void deletePostById(String postId) {
+
+        MediaPost post = mediaRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        User user = userRepository.findByEmail(getUserEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 🔐 SECURITY CHECK
+        if (!post.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        try {
+            // 🔥 DELETE FROM CLOUDINARY FIRST
+            if (post.getPublicId() != null) {
+                cloudinaryMediaService.deleteMedia(
+                        post.getPublicId(),
+                        post.getMediaType().name().toLowerCase() // image / video
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Cloudinary delete failed: " + e.getMessage());
+        }
+        mediaRepository.delete(post);
+    }
+    @Override
+    public MediaResponseDto updatePost(String postId, VideoRequestDto dto) {
+
+        MediaPost post = mediaRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        User user = userRepository.findByEmail(getUserEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 🔐 SECURITY CHECK
+        if (!post.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized");
+        }
+
+        try {
+            // 🔥 IF NEW FILE PROVIDED → REPLACE MEDIA
+            if (dto.getFile() != null && !dto.getFile().isEmpty()) {
+
+                // delete old file
+                if (post.getPublicId() != null) {
+                    cloudinaryMediaService.deleteMedia(
+                            post.getPublicId(),
+                            post.getMediaType().name().toLowerCase()
+                    );
+                }
+
+                // upload new file
+                FileResponseDto fileRes;
+
+                if (post.getMediaType().name().equalsIgnoreCase("IMAGE")) {
+                    fileRes = cloudinaryMediaService.uploadImage(dto.getFile());
+                } else {
+                    fileRes = cloudinaryMediaService.uploadVideo(dto.getFile());
+                }
+
+                post.setPublicId(fileRes.getPublicId());
+                post.setUrl(fileRes.getUrl());
+                post.setSecureUrl(fileRes.getSecureUrl());
+            }
+
+            // ✅ UPDATE TEXT FIELDS
+            if (dto.getTitle() != null) post.setTitle(dto.getTitle());
+            if (dto.getDescription() != null) post.setDescription(dto.getDescription());
+            if (dto.getCategories() != null) post.setCategories(dto.getCategories());
+            if (dto.getTags() != null) post.setTags(dto.getTags());
+
+            MediaPost updated = mediaRepository.save(post);
+
+            return MediaResponseDto.builder()
+                    .id(updated.getId())
+                    .title(updated.getTitle())
+                    .description(updated.getDescription())
+                    .url(updated.getUrl())
+                    .mediaType(updated.getMediaType().name())
+                    .categories(updated.getCategories())
+                    .tags(updated.getTags())
+                    .createdAt(LocalDateTime.ofInstant(
+                            updated.getCreatedAt(),
+                            java.time.ZoneId.systemDefault()))
+                    .build();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Update failed: " + e.getMessage());
+        }
     }
 
     private UserProfileResponseDto mapToDto(User user, UserProfile profile) {

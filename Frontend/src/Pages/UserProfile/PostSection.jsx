@@ -1,16 +1,20 @@
 import { Radio } from "lucide-react";
 import PostCard from "./PostCard";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import UploadModal from "../Community/UploadModal";
+
 
 export default function PostSection({
   activeTab,
   setActiveTab,
   postContainerRef,
   filteredPosts,
-  setShowPostModal,
+  setPosts, // ✅ IMPORTANT
 }) {
-
   const navigate = useNavigate();
+
+  const [showModal, setShowModal] = useState(false);
 
   const handleGoLive = () => {
     const roomId = Math.random().toString(36).substring(2, 8);
@@ -19,6 +23,7 @@ export default function PostSection({
 
   return (
     <>
+      {/* HEADER */}
       <div className="border-y bg-white flex justify-between items-center px-6">
         <div className="flex gap-3 py-2">
 
@@ -44,7 +49,7 @@ export default function PostSection({
             </button>
           ))}
 
-          {/* 🔥 GO LIVE BUTTON */}
+          {/* GO LIVE */}
           <button
             onClick={handleGoLive}
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-600 font-semibold hover:bg-red-100 transition"
@@ -56,17 +61,18 @@ export default function PostSection({
             <Radio size={16} />
             Go Live
           </button>
-
         </div>
 
+        {/* CREATE POST */}
         <button
-          onClick={() => setShowPostModal(true)}
+          onClick={() => setShowModal(true)}
           className="bg-blue-600 text-white px-5 py-2 rounded-full font-semibold shadow hover:bg-blue-700 transition"
         >
           Create Post
         </button>
       </div>
 
+      {/* POSTS */}
       <div
         ref={postContainerRef}
         className="flex-1 overflow-y-auto bg-gray-50 p-6 min-h-0"
@@ -77,6 +83,15 @@ export default function PostSection({
           ))}
         </div>
       </div>
+
+      {/* ✅ UPLOAD MODAL (CONNECTED) */}
+      {showModal && (
+        <UploadModal
+          type={activeTab === "videos" ? "video" : "image"}
+          setPosts={setPosts} // 🔥 UPDATE LIST
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   );
 }

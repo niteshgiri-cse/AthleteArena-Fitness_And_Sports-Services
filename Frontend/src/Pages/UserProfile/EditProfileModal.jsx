@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useDispatch } from "react-redux";
-import { updateProfileAction } from "@/redux/features/user/userAction";
+import { updateProfileAction } from "@/redux/features/user/userActions";
 
 export default function EditProfileModal({ user, onClose }) {
 

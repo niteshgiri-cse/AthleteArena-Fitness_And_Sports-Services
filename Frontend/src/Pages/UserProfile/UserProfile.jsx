@@ -5,12 +5,18 @@ import PostSection from "./PostSection";
 import EditProfileModal from "./EditProfileModal";
 
 import { useDispatch, useSelector } from "react-redux";
-import { getProfileAction } from "@/redux/features/user/userAction";
+
+// ✅ FIXED IMPORT
+import {
+  getProfileAction,
+  getMyPostAction,
+} from "@/redux/features/user/userActions";
 
 export default function UserProfile() {
   const dispatch = useDispatch();
 
-  const { userProfile, loading, error } = useSelector(
+  // ✅ GET REDUX DATA
+  const { userProfile, userPost, loading, error } = useSelector(
     (state) => state.user || {}
   );
 
@@ -31,19 +37,15 @@ export default function UserProfile() {
     tags: ["Football", "Fitness", "State Player"],
   });
 
-  const [title, setTitle] = useState("");
-  const [text, setText] = useState("");
-  const [tagsInput, setTagsInput] = useState("");
-  const [files, setFiles] = useState([]);
-  const [posts, setPosts] = useState([]);
-  const [progress, setProgress] = useState(0);
-
   const postContainerRef = useRef();
 
+  // ✅ LOAD PROFILE + POSTS
   useEffect(() => {
     dispatch(getProfileAction());
+    dispatch(getMyPostAction()); // 🔥 IMPORTANT
   }, [dispatch]);
 
+  // ✅ SET USER DATA
   useEffect(() => {
     if (userProfile) {
       setUser((prev) => ({
@@ -60,6 +62,7 @@ export default function UserProfile() {
     }
   }, [userProfile]);
 
+  // ✅ FOLLOW BUTTON
   const toggleFollow = () => {
     setUser((prev) => ({
       ...prev,
@@ -70,6 +73,7 @@ export default function UserProfile() {
     }));
   };
 
+  // ✅ IMAGE UPDATE (LOCAL ONLY)
   const updateImage = (e, field) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -80,80 +84,34 @@ export default function UserProfile() {
     }));
   };
 
-  const handleFiles = (selected) => {
-    if (!selected.length) return;
-    setFiles(selected);
-  };
-
-  const simulateUpload = (cb) => {
-    let val = 0;
-    const interval = setInterval(() => {
-      val += 10;
-      setProgress(val);
-      if (val >= 100) {
-        clearInterval(interval);
-        setProgress(0);
-        cb();
-      }
-    }, 150);
-  };
-
-  const createPost = () => {
-    simulateUpload(() => {
-      let type = "posts";
-
-      if (files.length > 0) {
-        if (files[0].type.startsWith("video")) type = "video";
-        else if (files[0].type.startsWith("image")) type = "image";
-      }
-
-      const newPost = {
-        id: Date.now(),
-        title,
-        text,
-        tags: tagsInput
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        type,
-        files: files.map((f) => URL.createObjectURL(f)),
-      };
-
-      setPosts((prev) => [newPost, ...prev]);
-
-      setTitle("");
-      setText("");
-      setTagsInput("");
-      setFiles([]);
-      setShowPostModal(false);
-    });
-  };
-
-  const filteredPosts = posts.filter((post) => {
-    if (activeTab === "images") return post.type === "image";
-    if (activeTab === "videos") return post.type === "video";
+  // ✅ FILTER POSTS (FROM BACKEND)
+  const filteredPosts = (userPost || []).filter((post) => {
+    if (activeTab === "images") return post.mediaType === "IMAGE";
+    if (activeTab === "videos") return post.mediaType === "VIDEO";
     return true;
   });
+
+  console.log("FINAL POSTS:", userPost); // 🔥 DEBUG
 
   return (
     <div className="h-screen bg-gray-100 overflow-hidden">
       <div className="max-w-7xl mx-auto bg-white h-full flex flex-col shadow rounded-xl overflow-hidden relative">
 
+        {/* LOADER */}
         {loading && (
-          <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center z-50">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-sm font-semibold text-gray-600">
-              Loading Profile...
-            </p>
+          <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-50">
+            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
 
+        {/* ERROR */}
         {error && (
           <div className="text-red-500 text-center py-2 text-sm">
             {error}
           </div>
         )}
 
+        {/* COVER */}
         <div className="relative h-52">
           <img src={user.cover} className="w-full h-full object-cover" />
           <label className="absolute top-3 right-3 bg-black/60 p-2 rounded-full cursor-pointer">
@@ -166,8 +124,9 @@ export default function UserProfile() {
           </label>
         </div>
 
-        <div className="p-5 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div className="flex items-end gap-4">
+        {/* PROFILE */}
+        <div className="p-5 flex justify-between items-end">
+          <div className="flex gap-4">
             <div className="relative">
               <img
                 src={user.avatar}
@@ -191,7 +150,7 @@ export default function UserProfile() {
                 {user.bio}
                 <Pencil
                   size={14}
-                  className="cursor-pointer hover:text-blue-600"
+                  className="cursor-pointer"
                   onClick={() => setShowEditModal(true)}
                 />
               </p>
@@ -199,17 +158,6 @@ export default function UserProfile() {
               <div className="flex gap-6 mt-2 text-sm font-medium">
                 <span><b>{user.followers}</b> Followers</span>
                 <span><b>{user.following}</b> Following</span>
-              </div>
-
-              <div className="flex flex-wrap gap-2 mt-2">
-                {user.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="px-3 py-1 text-xs bg-blue-50 text-blue-600 rounded-full font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
               </div>
             </div>
           </div>
@@ -223,29 +171,19 @@ export default function UserProfile() {
           </button>
         </div>
 
+        {/* POSTS SECTION */}
         <PostSection
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           postContainerRef={postContainerRef}
-          filteredPosts={filteredPosts}
+          filteredPosts={filteredPosts} // 🔥 REAL DATA
           setShowPostModal={setShowPostModal}
         />
       </div>
 
+      {/* MODALS */}
       {showPostModal && (
-        <PostCreateModal
-          onClose={() => setShowPostModal(false)}
-          title={title}
-          setTitle={setTitle}
-          text={text}
-          setText={setText}
-          tagsInput={tagsInput}
-          setTagsInput={setTagsInput}
-          handleFiles={handleFiles}
-          files={files}
-          progress={progress}
-          createPost={createPost}
-        />
+        <PostCreateModal onClose={() => setShowPostModal(false)} />
       )}
 
       {showEditModal && (

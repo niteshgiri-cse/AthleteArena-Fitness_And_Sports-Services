@@ -15,14 +15,17 @@ const userSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
+
     fetchUserSuccess: (state, action) => {
       state.loading = false;
       state.userProfile = action.payload;
     },
+
     fetchPostSuccess: (state, action) => {
       state.loading = false;
       state.userPost = action.payload;
     },
+
     fetchUserFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
