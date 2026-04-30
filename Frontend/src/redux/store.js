@@ -5,6 +5,7 @@ import mediaReducer from "@/redux/features/media/mediaReducer"
 import userReducer from "@/redux/features/user/userReducer"
 import adminReducer from "@/redux/features/Admin/adminReducer"
 import courseReducer from "@/redux/features/course/courseReducer"
+import eventReducer from "@/redux/features/event/eventReducer"
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -13,5 +14,6 @@ export const store = configureStore({
     user: userReducer,
     admin:adminReducer,
     course: courseReducer,
+    event: eventReducer,
   }
 });

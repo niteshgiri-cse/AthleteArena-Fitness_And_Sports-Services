@@ -1,38 +1,43 @@
-import React, { useState } from "react";
-
-const events = [
-  {
-    id: 1,
-    title: "National Football Championship",
-    date: "20 Feb 2026",
-    location: "Delhi Stadium",
-    status: "Open",
-    image:
-      "https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800",
-  },
-  {
-    id: 2,
-    title: "State Level Marathon",
-    date: "Live Now",
-    location: "Mumbai",
-    status: "Live",
-    image:
-      "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800",
-  },
-  {
-    id: 3,
-    title: "Cricket League Trials",
-    date: "10 Feb 2026",
-    location: "Chennai",
-    status: "Closed",
-    image:
-      "https://images.unsplash.com/photo-1593341646782-e0b495cff86d?w=800",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllEventsAction } from "@/redux/features/event/eventAction";
 
 const Event = () => {
+  const dispatch = useDispatch();
+
+  // ✅ REDUX DATA
+  const { events: reduxEvents, loading, error } = useSelector(
+    (state) => state.event
+  );
+
   const [activeTab, setActiveTab] = useState("All");
   const [registered, setRegistered] = useState([]);
+
+  // ✅ FIX: MOVE THIS ABOVE (IMPORTANT)
+  const capitalize = (str) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : "";
+
+  // ✅ CALL API
+  useEffect(() => {
+    dispatch(getAllEventsAction());
+  }, [dispatch]);
+
+  // ✅ FORMAT DATA
+  const events = reduxEvents.map((e) => ({
+    id: e.id,
+    title: e.title,
+    date:
+      e.status === "live"
+        ? "Live Now"
+        : new Date(e.dataAndTime).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          }),
+    location: e.location,
+    status: capitalize(e.status),
+    image: e.imageUrl,
+  }));
 
   const handleRegister = (id) => {
     if (!registered.includes(id)) {
@@ -40,6 +45,7 @@ const Event = () => {
     }
   };
 
+  // ✅ FILTER (UNCHANGED)
   const filteredEvents =
     activeTab === "All"
       ? events
@@ -47,6 +53,7 @@ const Event = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-14">
+      {/* HEADER */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-3xl font-bold">Events & Competitions</h2>
         <button className="text-blue-600 font-semibold hover:underline">
@@ -54,6 +61,7 @@ const Event = () => {
         </button>
       </div>
 
+      {/* FILTER */}
       <div className="flex gap-4 mb-8">
         {["All", "Open", "Live", "Closed"].map((tab) => (
           <button
@@ -70,6 +78,11 @@ const Event = () => {
         ))}
       </div>
 
+      {/* LOADING / ERROR */}
+      {loading && <p>Loading events...</p>}
+      {error && <p className="text-red-500">Failed to load events</p>}
+
+      {/* CARDS */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map((event) => (
           <div
@@ -83,6 +96,7 @@ const Event = () => {
             />
 
             <div className="p-4 space-y-2">
+              {/* STATUS BADGE */}
               <span
                 className={`text-xs font-semibold px-3 py-1 rounded-full ${
                   event.status === "Live"
@@ -99,6 +113,7 @@ const Event = () => {
               <p className="text-sm text-gray-500">{event.date}</p>
               <p className="text-sm text-gray-500">{event.location}</p>
 
+              {/* BUTTONS */}
               {event.status === "Open" && (
                 <button
                   onClick={() => handleRegister(event.id)}
@@ -115,8 +130,8 @@ const Event = () => {
               )}
 
               {event.status === "Live" && (
-                <button className="w-full mt-3 bg-red-600 text-white py-2 rounded-lg">
-                  Watch Live
+                <button className="w-full mt-3 bg-red-600 text-white py-2 rounded-lg animate-pulse">
+                  🔴 Watch Live
                 </button>
               )}
 
@@ -130,6 +145,14 @@ const Event = () => {
         ))}
       </div>
 
+      {/* NO DATA */}
+      {!loading && filteredEvents.length === 0 && (
+        <p className="text-center mt-10 text-gray-500">
+          No events available
+        </p>
+      )}
+
+      {/* STATIC UPDATES */}
       <div className="mt-14">
         <h3 className="text-2xl font-bold mb-6">Event Updates</h3>
 
