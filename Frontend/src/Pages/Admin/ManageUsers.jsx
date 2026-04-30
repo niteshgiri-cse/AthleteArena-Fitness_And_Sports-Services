@@ -171,58 +171,72 @@ const ManageUsers = () => {
       </div>
 
       {/* TABLE */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th className="text-right pr-4">Actions</th>
-            </tr>
-          </thead>
+    <div className="bg-white rounded-xl shadow overflow-hidden">
+  <table className="w-full text-sm table-fixed border-collapse">
 
-          <tbody>
-            {filtered.map((a) => (
-              <tr key={a.id} className="border-t">
-                <td className="p-3">{a.name}</td>
-                <td>{a.email}</td>
-                <td>{a.role}</td>
+    {/* HEADER */}
+    <thead className="bg-gray-100">
+      <tr>
+        <th className="p-3 text-left w-[20%]">Name</th>
+        <th className="p-3 text-left w-[35%]">Email</th>
+        <th className="p-3 text-center w-[15%]">Role</th>
+        <th className="p-3 text-center w-[15%]">Status</th>
+        <th className="p-3 text-right w-[15%] pr-4">Actions</th>
+      </tr>
+    </thead>
 
-                <td>
-                  <span
-                    className={`px-2 py-1 text-xs rounded ${
-                      a.status === "ACTIVE"
-                        ? "bg-green-100 text-green-600"
-                        : "bg-red-100 text-red-600"
-                    }`}
-                  >
-                    {a.status}
-                  </span>
-                </td>
+    {/* BODY */}
+    <tbody>
+      {filtered.map((a) => (
+        <tr
+          key={a.id}
+          className="border-t hover:bg-gray-50 transition"
+        >
+          {/* NAME */}
+          <td className="p-3 truncate">{a.name}</td>
 
-                <td className="text-right pr-4 space-x-2">
-                  <button onClick={() => handleEdit(a)}>
-                    <FiEdit2 />
-                  </button>
+          {/* EMAIL */}
+          <td className="truncate">{a.email}</td>
 
-                  <button onClick={() => toggleStatus(a.id)}>
-                    <FiUserX />
-                  </button>
+          {/* ROLE */}
+          <td className="text-center">{a.role}</td>
 
-                  <button onClick={() => handleDelete(a.id)}>
-                    <FiTrash2 />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {/* STATUS */}
+          <td className="text-center">
+            <span
+              className={`px-2 py-1 text-xs rounded ${
+                a.status === "ACTIVE"
+                  ? "bg-green-100 text-green-600"
+                  : "bg-red-100 text-red-600"
+              }`}
+            >
+              {a.status}
+            </span>
+          </td>
 
-        {loading && <p className="p-4">Loading...</p>}
-      </div>
+          {/* ACTIONS */}
+          <td className="text-right pr-4">
+            <div className="flex justify-end gap-3">
+              <button onClick={() => handleEdit(a)}>
+                <FiEdit2 />
+              </button>
 
+              <button onClick={() => toggleStatus(a.id)}>
+                <FiUserX />
+              </button>
+
+              <button onClick={() => handleDelete(a.id)}>
+                <FiTrash2 />
+              </button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  {loading && <p className="p-4">Loading...</p>}
+</div>
       {/* MODAL */}
       {open && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center">

@@ -1,49 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import { getAllEventsAction } from "@/redux/features/event/eventAction";
+import { getUsersDetailsAction } from "@/redux/features/Admin/adminActions";
 
 const Reports = () => {
 
-  const [events] = useState([
-    { id: 1, title: "Football", status: "open", registrations: 120, capacity: 200 },
-    { id: 2, title: "Marathon", status: "live", registrations: 500, capacity: "unlimited" },
-    { id: 3, title: "Cricket", status: "closed", registrations: 300, capacity: 300 },
-    { id: 4, title: "Basketball", status: "open", registrations: 80, capacity: 150 },
-  ]);
+  const dispatch = useDispatch();
 
-  const [users] = useState([
-    { id: 1, role: "admin" },
-    { id: 2, role: "user" },
-    { id: 3, role: "user" },
-    { id: 4, role: "admin" },
-  ]);
+  // ✅ REDUX DATA
+  const { events = [] } = useSelector((state) => state.event);
+  const { users = [] } = useSelector((state) => state.admin);
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("desc");
 
-  // 📊 CORE
-  const totalEvents = events.length;
-  const totalUsers = users.length;
-  const totalRegs = events.reduce((a, e) => a + e.registrations, 0);
-  const admins = users.filter(u => u.role === "admin").length;
+  // ================= FETCH =================
+  useEffect(() => {
+    dispatch(getAllEventsAction());
+    dispatch(getUsersDetailsAction());
+  }, [dispatch]);
 
-  // 🔥 EXTRA METRICS
-  const activeEvents = events.filter(e => e.status !== "closed").length;
-  const closedEvents = events.filter(e => e.status === "closed").length;
+  // ================= NORMALIZE =================
+  const formattedEvents = events.map((e) => ({
+    id: e.id,
+    title: e.title,
+    status: (e.status || "open").toLowerCase(),
+    registrations: 0,
+    capacity: e.capacity || "unlimited",
+  }));
 
-  const unlimitedEvents = events.filter(e => e.capacity === "unlimited").length;
+  const formattedUsers = users.map((u, i) => ({
+    id: u.id || i,
+    role: (u.role || "user").toLowerCase(),
+  }));
 
-  const topEvent = [...events].sort((a,b)=>b.registrations-a.registrations)[0];
-  const lowEvent = [...events].sort((a,b)=>a.registrations-b.registrations)[0];
+  // ================= STATS =================
+  const totalEvents = formattedEvents.length;
+  const totalUsers = formattedUsers.length;
+  const totalRegs = formattedEvents.reduce((a, e) => a + e.registrations, 0);
+  const admins = formattedUsers.filter(u => u.role === "admin").length;
 
-  const adminRatio = ((admins / totalUsers) * 100).toFixed(1);
+  const activeEvents = formattedEvents.filter(e => e.status !== "closed").length;
+  const closedEvents = formattedEvents.filter(e => e.status === "closed").length;
 
-  const overbooked = events.filter(e =>
+  const unlimitedEvents = formattedEvents.filter(e => e.capacity === "unlimited").length;
+
+  const topEvent = [...formattedEvents].sort((a,b)=>b.registrations-a.registrations)[0];
+  const lowEvent = [...formattedEvents].sort((a,b)=>a.registrations-b.registrations)[0];
+
+  const adminRatio = totalUsers
+    ? ((admins / totalUsers) * 100).toFixed(1)
+    : 0;
+
+  const overbooked = formattedEvents.filter(e =>
     e.capacity !== "unlimited" && e.registrations > e.capacity
   );
 
-  // 🔍 FILTER
-  let filtered = events.filter(e =>
-    e.title.toLowerCase().includes(search.toLowerCase())
+  // ================= FILTER =================
+  let filtered = formattedEvents.filter(e =>
+    e.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   if (filter !== "all") {
@@ -130,7 +147,7 @@ const Reports = () => {
       <div className="bg-white p-5 rounded shadow">
         <h3 className="mb-3 font-semibold">Registrations Chart</h3>
 
-        {events.map(e => {
+        {formattedEvents.map(e => {
           const percent =
             e.capacity === "unlimited"
               ? 100
@@ -145,11 +162,7 @@ const Reports = () => {
 
               <div className="bg-gray-200 h-3 rounded">
                 <div
-                  className={`h-3 rounded ${
-                    percent > 90 ? "bg-red-500" :
-                    percent > 60 ? "bg-yellow-500" :
-                    "bg-indigo-600"
-                  }`}
+                  className="h-3 rounded bg-indigo-600"
                   style={{ width: `${percent}%` }}
                 ></div>
               </div>
@@ -160,40 +173,42 @@ const Reports = () => {
 
       {/* TABLE */}
       <div className="bg-white rounded shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3 text-left">Event</th>
-              <th>Status</th>
-              <th>Regs</th>
-              <th>Capacity</th>
-              <th>Utilization</th>
-            </tr>
-          </thead>
+        <table className="w-full text-sm border-collapse">
+  <thead className="bg-gray-100">
+    <tr>
+      <th className="p-3 text-left">Event</th>
+      <th className="p-3 text-left">Status</th>
+      <th className="p-3 text-left">Regs</th>
+      <th className="p-3 text-left">Capacity</th>
+      <th className="p-3 text-left">Utilization</th>
+    </tr>
+  </thead>
 
-          <tbody>
-            {filtered.map(e => (
-              <tr key={e.id} className="border-t">
-                <td className="p-3">{e.title}</td>
-                <td>{e.status}</td>
-                <td>{e.registrations}</td>
-                <td>{e.capacity === "unlimited" ? "∞" : e.capacity}</td>
-                <td>
-                  {e.capacity === "unlimited"
-                    ? "100%"
-                    : Math.round((e.registrations / e.capacity) * 100) + "%"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  <tbody>
+    {filtered.map((e) => (
+      <tr key={e.id} className="border-t hover:bg-gray-50">
+        <td className="p-3">{e.title}</td>
+        <td className="p-3 capitalize">{e.status}</td>
+        <td className="p-3">{e.registrations}</td>
+        <td className="p-3">
+          {e.capacity === "unlimited" ? "∞" : e.capacity}
+        </td>
+        <td className="p-3">
+          {e.capacity === "unlimited"
+            ? "100%"
+            : Math.round((e.registrations / e.capacity) * 100) + "%"}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
       </div>
 
     </div>
   );
 };
 
-/* UI */
+// UI
 const Stat = ({ title, value }) => (
   <div className="bg-linear-to-r from-indigo-500 to-purple-600 text-white p-4 rounded">
     <p>{title}</p>
