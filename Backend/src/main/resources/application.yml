@@ -5,8 +5,21 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URI}
-    redis:
-      url: ${REDIS_URL:rediss://default:Er0R6Tc53iZ1oJanLKryFlQqs7kgbJnZ@redis-13083.c264.ap-south-1-1.ec2.cloud.redislabs.com:13083}
+
+  redis:
+    url: ${REDIS_URL}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
   servlet:
     multipart:
@@ -24,9 +37,14 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
 
+razorpay:
+  key: ${RAZORPAY_KEY_ID}
+  secret: ${RAZORPAY_KEY_SECRET}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
+
 app:
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
 
-
-NEWS-API-KEY: ${NEWS_API_KEY}
+news:
+  api-key: ${NEWS_API_KEY}

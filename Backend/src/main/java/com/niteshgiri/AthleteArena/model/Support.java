@@ -1,23 +1,17 @@
 package com.niteshgiri.AthleteArena.model;
 
-import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Document
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class Notification {
-
+@Document(collection = "support")
+public class Support {
     @Id
     private String id;
-
+    private String username;
+    private String email;
     private String userId;
-    private String message;
-    private boolean read;
-    private LocalDateTime createdAt;
+    private String content;
+    private LocalDateTime localDateTime;
 }

@@ -27,4 +27,10 @@ public class EventServiceImp implements EventService {
               .registrationFees(x.getRegistrationFees())
               .build()).toList();
     }
+
+    @Override
+    public Object createOrder(String eventId) {
+        return null;
+    }
+
 }

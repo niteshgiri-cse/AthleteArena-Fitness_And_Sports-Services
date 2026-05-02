@@ -16,7 +16,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class NewsArticleServiceImpl implements NewsArticleService {
 
-    @Value("${NEWS-API-KEY}")
+    @Value("${news.api-key}")
     private String secretKey;
 
     private static final String NEWS_CACHE_KEY = "sports_news";

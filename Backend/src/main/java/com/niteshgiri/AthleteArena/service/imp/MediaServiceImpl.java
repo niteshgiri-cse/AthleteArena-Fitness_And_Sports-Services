@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,7 +26,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -41,7 +41,7 @@ public class MediaServiceImpl implements MediaService {
 
     private User getCurrentUser() {
         String email = authUtil.getCurrentUserEmail();
-        return userRepository.findByEmail(email).orElseThrow();
+        return userRepository.findByEmail(email).orElseThrow(()-> new UsernameNotFoundException("User Not Found"));
     }
 
     private Set<MediaCategory> resolveCategories(Set<MediaCategory> categories) {

@@ -8,4 +8,7 @@ import java.util.List;
 public interface EventService {
 
     List<EventResponseDto> getAllEvents();
+
+
+    Object createOrder(String eventId);
 }

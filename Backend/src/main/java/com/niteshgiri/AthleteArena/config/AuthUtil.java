@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
-
 @Component
 public class AuthUtil {
+
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -47,4 +47,11 @@ public class AuthUtil {
         Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
     }
+
+    public String getLoggedInUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) auth.getPrincipal();
+        return user.getId();
+    }
+
 }
