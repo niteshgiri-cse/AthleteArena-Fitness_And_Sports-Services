@@ -11,14 +11,23 @@ const isTokenValid = (token) => {
   }
 };
 
-const ProtectedRoute = () => {
+const ProtectedRoute = ({ allowedRoles }) => {
   const token = localStorage.getItem("token");
+  const roles = JSON.parse(localStorage.getItem("roles"));
 
+  // ❌ invalid or expired token
   if (!isTokenValid(token)) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("roles");
     return <Navigate to="/auth" replace />;
   }
 
-  return <Outlet />; // 🔥 IMPORTANT
+  // ❌ role check (only if provided)
+  if (allowedRoles && !roles?.some(r => allowedRoles.includes(r))) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

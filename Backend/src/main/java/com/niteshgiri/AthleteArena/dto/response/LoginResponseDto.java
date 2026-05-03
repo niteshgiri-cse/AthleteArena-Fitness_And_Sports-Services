@@ -1,8 +1,9 @@
 package com.niteshgiri.AthleteArena.dto.response;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.niteshgiri.AthleteArena.model.type.RoleType;
+import lombok.*;
+
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -10,5 +11,5 @@ import lombok.NoArgsConstructor;
 public class LoginResponseDto {
     private String id;
     private String jwt;
-
+    private Set<RoleType> roles;
 }

@@ -14,15 +14,21 @@ export default function Login({ setView }) {
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const onChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const onChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   const validate = () => {
     const newErrors = {};
+
     if (!form.email) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(form.email))
       newErrors.email = "Invalid email format";
@@ -36,8 +42,10 @@ export default function Login({ setView }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    const validationErrors = validate();
 
+    if (loading) return; // 🔒 prevent double click
+
+    const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       toast.error("Please fix the errors");
@@ -45,34 +53,54 @@ export default function Login({ setView }) {
     }
 
     setErrors({});
+    setLoading(true);
     dispatch(loginStart());
 
     try {
       const res = await loginUser({
-        email: form.email.trim(),
+        email: form.email.trim().toLowerCase(),
         password: form.password.trim(),
       });
 
-      const token = res.data.jwt;
+      const { jwt: token, roles = [], id } = res.data;
+
+      // ✅ save safely
+      localStorage.setItem("token", token);
+      localStorage.setItem("roles", JSON.stringify(roles));
 
       dispatch(
         loginSuccess({
-          user: { id: res.data.id },
+          user: { id, roles },
           token,
         })
       );
 
-      localStorage.setItem("token", token);
       toast.success("Login successful 🎉");
-      navigate("/");
+
+      // 🔥 smooth redirect (no flicker)
+      requestAnimationFrame(() => {
+        if (roles.includes("ADMIN")) {
+          navigate("/admin", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
+      });
+
     } catch (err) {
       dispatch(loginFailure());
-      toast.error(err.response?.data?.message || "Login failed");
+      toast.error(
+        err.response?.data?.message || "Invalid email or password"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={submit} className="w-full max-w-md space-y-4">
+    <form
+      onSubmit={submit}
+      className="w-full max-w-md space-y-4 transition-all duration-200"
+    >
       <h2 className="text-3xl font-semibold">Sign in to your account</h2>
 
       {/* Email */}
@@ -83,7 +111,7 @@ export default function Login({ setView }) {
           value={form.email}
           placeholder="Email address"
           onChange={onChange}
-          className="w-full border p-3 rounded-lg"
+          className="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
         />
         {errors.email && (
           <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -98,33 +126,32 @@ export default function Login({ setView }) {
           value={form.password}
           placeholder="Password"
           onChange={onChange}
-          className="w-full border p-3 rounded-lg pr-12"
+          className="w-full border p-3 rounded-lg pr-12 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
         />
 
-        {/* FIXED POSITION + CURSOR */}
         <span
-          onClick={() => setShowPassword(!showPassword)}
+          onClick={() => setShowPassword((prev) => !prev)}
           className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-700"
         >
           {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
         </span>
       </div>
 
-      {/* Login Button */}
+      {/* Button */}
       <button
         type="submit"
-        disabled={!form.email || !form.password}
-        className={`w-full p-3 rounded-lg text-white transition-all duration-100
-          ${
-            !form.email || !form.password
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700 cursor-pointer active:scale-95"
-          }`}
+        disabled={loading}
+        className={`w-full p-3 rounded-lg text-white transition-all duration-200
+        ${
+          loading
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-indigo-600 hover:bg-indigo-700 active:scale-95"
+        }`}
       >
-        Sign in
+        {loading ? "Signing in..." : "Sign in"}
       </button>
 
-      {/* Google Button */}
+      {/* Google */}
       <button
         type="button"
         className="w-full border p-3 rounded-lg flex items-center justify-center gap-3 cursor-pointer active:scale-95 transition-transform"

@@ -1,24 +1,21 @@
 package com.niteshgiri.AthleteArena.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SignUpRequestDto {
 
-    @NotBlank(message = "Name is required")
+    @NotBlank
     private String name;
 
     @Email
-    @NotBlank(message = "Email is required")
+    @NotBlank
     private String email;
 
-    @Size(min = 8, message = "Password should be at least 8 characters")
+    @Size(min = 8)
+    @NotBlank
     private String password;
 }

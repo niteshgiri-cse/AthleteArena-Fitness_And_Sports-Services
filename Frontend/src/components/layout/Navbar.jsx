@@ -42,6 +42,10 @@ export default function Navbar() {
   const token = localStorage.getItem("token");
   const isLoggedIn = isTokenValid(token);
 
+  // ✅ GET ROLES
+  const roles = JSON.parse(localStorage.getItem("roles") || "[]");
+  const isAdmin = roles.includes("ADMIN");
+
   useEffect(() => {
     if (isLoggedIn) {
       dispatch(getProfileAction());
@@ -66,7 +70,6 @@ export default function Navbar() {
 
                 {/* LEFT */}
                 <div className="flex items-center">
-                  {/* Mobile menu button */}
                   <div className="sm:hidden mr-2">
                     <DisclosureButton className="p-2 rounded-lg hover:bg-slate-100">
                       {open ? (
@@ -77,21 +80,19 @@ export default function Navbar() {
                     </DisclosureButton>
                   </div>
 
-                  {/* Logo */}
                   <NavLink to="/" className="text-xl sm:text-2xl font-bold text-[#010F31]">
                     ATHLETE
-                    <span className="bg-gradient-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
+                    <span className="bg-linear-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
                       ARENA
                     </span>
                   </NavLink>
 
-                  {/* Desktop menu */}
                   <div className="hidden sm:flex sm:ml-10 space-x-2">
                     {navigation.map((item) => (
                       <NavLink
                         key={item.name}
                         to={item.href}
-                        className="px-4 py-2 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100"
+                        className="px-4 py-2 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
                       >
                         {item.name}
                       </NavLink>
@@ -118,7 +119,7 @@ export default function Navbar() {
                   {isLoggedIn && !openProfile && (
                     <div
                       onClick={() => setOpenProfile(true)}
-                      className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100"
+                      className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100 transition"
                     >
                       <img
                         src={profileImage}
@@ -134,7 +135,6 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* ✅ MOBILE MENU FIX */}
             <DisclosurePanel className="sm:hidden px-4 pb-4 space-y-2 bg-white shadow-md">
               {navigation.map((item) => (
                 <NavLink
@@ -150,66 +150,110 @@ export default function Navbar() {
         )}
       </Disclosure>
 
-      {/* PROFILE DRAWER */}
       {isLoggedIn && openProfile &&
-        createPortal(
-          <>
-            <div
+  createPortal(
+    <>
+      {/* BACKDROP */}
+      <div
+        onClick={() => setOpenProfile(false)}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-9998 transition-opacity duration-300"
+      />
+
+      {/* DRAWER */}
+      <div className={`fixed inset-y-0 right-0 w-85 bg-white z-9999 shadow-2xl
+        transform transition-transform duration-300 ease-out
+        ${openProfile ? "translate-x-0" : "translate-x-full"}`}>
+
+        {/* HEADER */}
+        <div className="flex items-center gap-3 p-5 border-b bg-linear-to-r from-slate-50 to-white">
+          <img
+            src={profileImage}
+            className="h-11 w-11 rounded-full ring-2 ring-slate-200"
+            alt="profile"
+          />
+
+          <div className="flex-1">
+            <p className="font-semibold text-[15px] text-slate-800 flex items-center gap-2">
+              Account
+              {isAdmin && (
+                <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
+                  ADMIN
+                </span>
+              )}
+            </p>
+
+            <p className="text-xs text-slate-500">
+              {isAdmin
+                ? "You have administrative privileges"
+                : "Manage your account settings"}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setOpenProfile(false)}
+            className="text-slate-500 hover:text-black text-lg cursor-pointer font-semibold"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* BODY */}
+        <div className="p-4 space-y-2">
+
+          <NavLink
+            to="/userProfile"
+            onClick={() => setOpenProfile(false)}
+            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+          >
+            Profile Settings
+          </NavLink>
+
+          <NavLink
+            to="/registered-events"
+            onClick={() => setOpenProfile(false)}
+            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+          >
+            My Events
+          </NavLink>
+
+          <NavLink
+            to="/mentors"
+            onClick={() => setOpenProfile(false)}
+            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
+          >
+            Mentorship
+          </NavLink>
+
+          {/* ADMIN SWITCH */}
+          {isAdmin && (
+            <NavLink
+              to="/admin"
               onClick={() => setOpenProfile(false)}
-              className="fixed inset-0 bg-black/60 z-[9998]"
-            />
+              className="block px-4 py-3 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"
+            >
+              Admin Dashboard
+            </NavLink>
+          )}
 
-            <div className="fixed inset-y-0 right-0 w-[320px] bg-white z-[9999] shadow-2xl transition-transform duration-300">
+          <div className="border-t my-3" />
 
-              <div className="flex items-center gap-3 p-4 border-b">
-                <img
-                  src={profileImage}
-                  className="h-10 w-10 rounded-full"
-                  alt="profile"
-                />
+          {/* LOGOUT */}
+          <button
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("roles");
+              window.location.href = "/auth";
+            }}
+            className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition"
+          >
+            Sign out
+          </button>
 
-                <div className="flex-1">
-                  <p className="font-semibold">My Profile</p>
-                  <p className="text-sm text-slate-500">User Panel</p>
-                </div>
-
-                <button
-                  onClick={() => setOpenProfile(false)}
-                  className="text-xl cursor-pointer font-semibold"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="p-4 space-y-3">
-
-                <NavLink to="/userProfile" className="block p-3 border-b font-semibold hover:bg-slate-200 rounded-lg">
-                  Profile
-                </NavLink>
-
-                <NavLink to="/registered-events" className="block p-3 border-b font-semibold hover:bg-slate-200 rounded-lg">
-                  Registered Events
-                </NavLink>
-
-                <NavLink to="/mentors" className="block p-3 border-b font-semibold hover:bg-slate-200 rounded-lg">
-                  Mentors
-                </NavLink>
-
-                <button
-                  onClick={() => {
-                    localStorage.clear();
-                    window.location.href = "/auth";
-                  }}
-                  className="w-full text-left p-3 border-b text-red-500 font-semibold hover:bg-slate-200 rounded-lg"
-                >
-                  Logout
-                </button>
-
-              </div>
-            </div>
-          </>,
-          document.body
-        )}
+        </div>
+      </div>
+    </>,
+    document.body
+  )}
     </>
   );
 }

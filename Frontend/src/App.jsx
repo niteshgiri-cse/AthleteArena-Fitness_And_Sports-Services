@@ -39,16 +39,15 @@ export default function App() {
         {/* 🔓 PUBLIC */}
         <Route path="/auth" element={<Auth />} />
 
-        {/* 🔐 PROTECTED */}
-        <Route element={<ProtectedRoute />}>
+        {/* 🌐 MAIN LAYOUT (NAVBAR + FOOTER) */}
+        <Route element={<MainLayout />}>
 
-          {/* 🎥 FULLSCREEN (NO NAVBAR + NO FOOTER) */}
-          <Route path="/course/:id" element={<CoursePlayer />} />
-          <Route path="/live/:roomId" element={<GoLive />} />
+          {/* ✅ HOME (PUBLIC + NAVBAR) */}
+          <Route path="/" element={<Home />} />
 
-          {/* 🌐 NORMAL APP (WITH NAVBAR + FOOTER) */}
-          <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
+          {/* 🔐 PROTECTED (USER + ADMIN) */}
+          <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
+
             <Route path="/userProfile" element={<UserProfile />} />
             <Route path="/sport-category" element={<SportsCategories />} />
             <Route path="/community" element={<Community />} />
@@ -58,12 +57,18 @@ export default function App() {
             <Route path="/live-learning" element={<LearningCenter />} />
             <Route path="/athlete-blogs" element={<AthleteBlogs />} />
             <Route path="/training-guides" element={<TrainingGuides />} />
-          </Route>
 
+          </Route>
         </Route>
 
-        {/* 🛠 ADMIN */}
-        <Route element={<ProtectedRoute />}>
+        {/* 🎥 FULLSCREEN (NO NAVBAR / FOOTER) */}
+        <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
+          <Route path="/course/:id" element={<CoursePlayer />} />
+          <Route path="/live/:roomId" element={<GoLive />} />
+        </Route>
+
+        {/* 🛠 ADMIN (NO NAVBAR / FOOTER) */}
+        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="notification" element={<AdminNotification />} />

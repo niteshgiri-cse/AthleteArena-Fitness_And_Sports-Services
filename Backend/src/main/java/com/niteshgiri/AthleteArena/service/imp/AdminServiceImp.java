@@ -28,7 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -127,25 +129,41 @@ public class AdminServiceImp implements AdminService {
 
         User user = userRepository.findByEmail(dto.getEmail()).orElse(null);
 
-        // 🔥 CREATE USER IF NOT EXISTS
         if (user == null) {
             user = new User();
-            user.setName(dto.getName());
-            user.setEmail(dto.getEmail());
+            user.setName(dto.getName().trim());
+            user.setEmail(dto.getEmail().trim().toLowerCase());
 
-            // ✅ ENCODE PASSWORD
+            String cleanName = dto.getName()
+                    .trim()
+                    .replaceAll("\\s+", "");
+
+            String username = cleanName + "_" +
+                    UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+            user.setUsername(username);
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
-
             user.setStatus(UserStatus.ACTIVE);
+            user.setRoles(new HashSet<>());
         }
 
-        // 🔥 CHECK ADMIN ROLE
+        if (user.getRoles() == null) {
+            user.setRoles(new HashSet<>());
+        }
+
         if (user.getRoles().contains(RoleType.ADMIN)) {
             throw new RuntimeException("User is already an admin");
         }
 
         user.getRoles().add(RoleType.ADMIN);
+        user.getRoles().add(RoleType.USER);
+
         userRepository.save(user);
+
+        Optional<Admin> existingAdmin = adminRepository.findByEmail(dto.getEmail());
+        if (existingAdmin.isPresent()) {
+            throw new RuntimeException("Admin already exists");
+        }
 
         Admin admin = Admin.builder()
                 .adminId(generateCustomId())
@@ -287,7 +305,7 @@ public class AdminServiceImp implements AdminService {
         String publicId = course.getPublicId();
 
         try {
-            // 🔥 IF NEW IMAGE → DELETE OLD + UPLOAD NEW
+
             if (dto.getThumbnail() != null && !dto.getThumbnail().isEmpty()) {
 
                 if (publicId != null) {
@@ -301,8 +319,6 @@ public class AdminServiceImp implements AdminService {
         } catch (Exception e) {
             throw new RuntimeException("Thumbnail update failed");
         }
-
-        // UPDATE FIELDS
         if (dto.getCourseTitle() != null) course.setCourseTitle(dto.getCourseTitle());
         if (dto.getVideoTitle() != null) course.setVideoTitle(dto.getVideoTitle());
         if (dto.getVideoLink() != null) course.setVideoLink(dto.getVideoLink());
