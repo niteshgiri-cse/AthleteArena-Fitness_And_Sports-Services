@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -72,30 +73,46 @@ public class UserServiceImpl implements UserService {
     public UserProfileResponseDto updateUserProfile(UserProfileRequestDto dto) {
 
         User user = userRepository.findByEmail(getUserEmail())
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         UserProfile profile = userProfileRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new IllegalArgumentException("User Profile not exist"));
+                .orElseThrow(() -> new RuntimeException("User profile not found"));
 
-        if (dto.getName() != null) {
-            profile.setName(dto.getName());
-        }
-        if (dto.getBio() != null) {
-            profile.setBio(dto.getBio());
-        }
-        if (dto.getProfileImageUrl() != null) {
-            profile.setProfileImageUrl(dto.getProfileImageUrl());
-        }
-        if (dto.getBackgroundImageUrl() != null) {
-            profile.setBackgroundImageUrl(dto.getBackgroundImageUrl());
-        }
-        if (dto.getTags() != null) {
-            profile.setTags(dto.getTags());
-        }
+        try {
 
-        userProfileRepository.save(profile);
+            if (dto.getName() != null && !dto.getName().isBlank()) {
+                profile.setName(dto.getName());
+            }
 
-        return mapToDto(user, profile);
+            if (dto.getBio() != null) {
+                profile.setBio(dto.getBio());
+            }
+
+            if (dto.getTags() != null) {
+                profile.setTags(dto.getTags());
+            }
+
+            if (dto.getProfileImageUrl() != null && !dto.getProfileImageUrl().isEmpty()) {
+
+                FileResponseDto file = cloudinaryMediaService.uploadImage(dto.getProfileImageUrl());
+
+                profile.setProfileImageUrl(file.getSecureUrl());
+            }
+
+            if (dto.getBackgroundImageUrl() != null && !dto.getBackgroundImageUrl().isEmpty()) {
+
+                FileResponseDto file = cloudinaryMediaService.uploadImage(dto.getBackgroundImageUrl());
+
+                profile.setBackgroundImageUrl(file.getSecureUrl());
+            }
+
+            UserProfile saved = userProfileRepository.save(profile);
+
+            return mapToDto(user, saved);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Profile update failed: " + e.getMessage());
+        }
     }
 
     @Override
@@ -103,6 +120,7 @@ public class UserServiceImpl implements UserService {
         UserProfile userProfile = UserProfile.builder()
                 .userId(user.getId())
                 .name(user.getName())
+                .createdAt(Instant.now())
                 .build();
 
         userProfileRepository.save(userProfile);
@@ -144,16 +162,14 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(getUserEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 🔐 SECURITY CHECK
         if (!post.getUserId().equals(user.getId())) {
             throw new RuntimeException("Unauthorized");
         }
 
         try {
-            // 🔥 IF NEW FILE PROVIDED → REPLACE MEDIA
+
             if (dto.getFile() != null && !dto.getFile().isEmpty()) {
 
-                // delete old file
                 if (post.getPublicId() != null) {
                     cloudinaryMediaService.deleteMedia(
                             post.getPublicId(),
@@ -161,7 +177,6 @@ public class UserServiceImpl implements UserService {
                     );
                 }
 
-                // upload new file
                 FileResponseDto fileRes;
 
                 if (post.getMediaType().name().equalsIgnoreCase("IMAGE")) {
@@ -175,7 +190,6 @@ public class UserServiceImpl implements UserService {
                 post.setSecureUrl(fileRes.getSecureUrl());
             }
 
-            // ✅ UPDATE TEXT FIELDS
             if (dto.getTitle() != null) post.setTitle(dto.getTitle());
             if (dto.getDescription() != null) post.setDescription(dto.getDescription());
             if (dto.getCategories() != null) post.setCategories(dto.getCategories());
@@ -203,6 +217,7 @@ public class UserServiceImpl implements UserService {
 
     private UserProfileResponseDto mapToDto(User user, UserProfile profile) {
         return UserProfileResponseDto.builder()
+                .userId(user.getId())
                 .name(profile.getName())
                 .email(user.getEmail())
                 .bio(profile.getBio())

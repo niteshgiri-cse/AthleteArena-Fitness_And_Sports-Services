@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Upload } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { updateProfileAction } from "@/redux/features/user/userActions";
 
@@ -11,9 +11,13 @@ export default function EditProfileModal({ user, onClose }) {
     name: "",
     bio: "",
     tags: "",
-    profileImageUrl: "",
-    backgroundImageUrl: "",
   });
+
+  const [profileFile, setProfileFile] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
+
+  const [previewProfile, setPreviewProfile] = useState(null);
+  const [previewCover, setPreviewCover] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -21,9 +25,10 @@ export default function EditProfileModal({ user, onClose }) {
         name: user.name ?? "",
         bio: user.bio ?? "",
         tags: Array.isArray(user.tags) ? user.tags.join(", ") : "",
-        profileImageUrl: user.avatar ?? "",
-        backgroundImageUrl: user.cover ?? "",
       });
+
+      setPreviewProfile(user.profileImageUrl || null);
+      setPreviewCover(user.backgroundImageUrl || null);
     }
   }, [user]);
 
@@ -36,109 +41,148 @@ export default function EditProfileModal({ user, onClose }) {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = () => {
-    const payload = {
-      ...form,
-      tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
-    };
+  // 🔥 FILE HANDLERS
+  const handleProfileImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileFile(file);
+      setPreviewProfile(URL.createObjectURL(file));
+    }
+  };
 
-    dispatch(updateProfileAction(payload));
+  const handleCoverImage = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverFile(file);
+      setPreviewCover(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = () => {
+
+    const formData = new FormData();
+
+    formData.append("name", form.name);
+    formData.append("bio", form.bio);
+
+    // tags → multiple values
+    form.tags
+      .split(",")
+      .map(t => t.trim())
+      .filter(Boolean)
+      .forEach(tag => formData.append("tags", tag));
+
+    if (profileFile) {
+      formData.append("profileImageUrl", profileFile);
+    }
+
+    if (coverFile) {
+      formData.append("backgroundImageUrl", coverFile);
+    }
+
+    dispatch(updateProfileAction(formData));
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-      <div className="bg-white w-full max-w-lg rounded-2xl p-6 relative shadow-2xl animate-[scaleIn_0.25s_ease]">
+      <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl">
 
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-5">
-          <h2 className="text-xl font-bold text-gray-800">
-            Edit Profile
-          </h2>
-          <X
-            className="cursor-pointer text-gray-500 hover:text-red-500 transition"
-            onClick={onClose}
+          <h2 className="text-xl font-semibold">Edit Profile</h2>
+          <X onClick={onClose} className="cursor-pointer" />
+        </div>
+
+        <div className="space-y-4">
+
+          {/* NAME */}
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="Full Name"
+            className="w-full border p-3 rounded-lg"
           />
+
+          {/* BIO */}
+          <textarea
+            name="bio"
+            value={form.bio}
+            onChange={handleChange}
+            placeholder="Bio"
+            className="w-full border p-3 rounded-lg"
+          />
+
+          {/* TAGS */}
+          <input
+            name="tags"
+            value={form.tags}
+            onChange={handleChange}
+            placeholder="Tags (comma separated)"
+            className="w-full border p-3 rounded-lg"
+          />
+
+          {/* PROFILE IMAGE */}
+          <div>
+            <label className="text-sm font-medium">Profile Image</label>
+            <div className="flex items-center gap-3 mt-2">
+              {previewProfile && (
+                <img
+                  src={previewProfile}
+                  className="h-12 w-12 rounded-full object-cover"
+                />
+              )}
+              <label className="cursor-pointer text-blue-600 flex items-center gap-1">
+                <Upload size={16} />
+                Upload
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleProfileImage}
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* COVER IMAGE */}
+          <div>
+            <label className="text-sm font-medium">Cover Image</label>
+            <div className="flex items-center gap-3 mt-2">
+              {previewCover && (
+                <img
+                  src={previewCover}
+                  className="h-12 w-20 object-cover rounded"
+                />
+              )}
+              <label className="cursor-pointer text-blue-600 flex items-center gap-1">
+                <Upload size={16} />
+                Upload
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleCoverImage}
+                />
+              </label>
+            </div>
+          </div>
+
         </div>
 
-        <div className="flex flex-col gap-4">
-
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              Full Name
-            </label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              Bio
-            </label>
-            <textarea
-              name="bio"
-              value={form.bio}
-              onChange={handleChange}
-              rows={3}
-              className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              Tags
-            </label>
-            <input
-              name="tags"
-              value={form.tags}
-              onChange={handleChange}
-              className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              Profile Image URL
-            </label>
-            <input
-              name="profileImageUrl"
-              value={form.profileImageUrl}
-              onChange={handleChange}
-              className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-semibold text-gray-600 mb-1 block">
-              Cover Image URL
-            </label>
-            <input
-              name="backgroundImageUrl"
-              value={form.backgroundImageUrl}
-              onChange={handleChange}
-              className="w-full border px-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-
-        </div>
-
+        {/* ACTIONS */}
         <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-full bg-gray-200 text-gray-700"
-          >
+          <button onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 rounded-full bg-blue-600 text-white"
+            className="px-6 py-2 bg-blue-600 text-white rounded"
           >
-            Save Changes
+            Save
           </button>
         </div>
 

@@ -6,7 +6,7 @@ import {
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { BellIcon } from "lucide-react";
+import { BellIcon, User } from "lucide-react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router-dom";
 
@@ -42,7 +42,6 @@ export default function Navbar() {
   const token = localStorage.getItem("token");
   const isLoggedIn = isTokenValid(token);
 
-  // ✅ GET ROLES
   const roles = JSON.parse(localStorage.getItem("roles") || "[]");
   const isAdmin = roles.includes("ADMIN");
 
@@ -52,17 +51,14 @@ export default function Navbar() {
     }
   }, [dispatch, isLoggedIn]);
 
-  useEffect(() => {
-    document.body.style.overflow = openProfile ? "hidden" : "auto";
-  }, [openProfile]);
-
-  const profileImage =
-    userProfile?.profileImageUrl ||
-    "https://i.pravatar.cc/150?img=12";
+  const profileImage = userProfile?.profileImageUrl;
 
   return (
     <>
-      <Disclosure as="nav" className="sticky top-0 z-40 backdrop-blur-xl bg-white/80">
+      <Disclosure
+        as="nav"
+        className="sticky top-0 z-40 backdrop-blur-xl bg-white/80"
+      >
         {({ open }) => (
           <>
             <div className="mx-auto max-w-7xl px-4">
@@ -80,7 +76,10 @@ export default function Navbar() {
                     </DisclosureButton>
                   </div>
 
-                  <NavLink to="/" className="text-xl sm:text-2xl font-bold text-[#010F31]">
+                  <NavLink
+                    to="/"
+                    className="text-xl sm:text-2xl font-bold text-[#010F31]"
+                  >
                     ATHLETE
                     <span className="bg-linear-to-r from-indigo-500 to-violet-500 bg-clip-text text-transparent">
                       ARENA
@@ -102,11 +101,14 @@ export default function Navbar() {
 
                 {/* RIGHT */}
                 <div className="flex items-center space-x-3">
+
+                  {/* BELL */}
                   <div className="relative p-2 rounded-full hover:bg-slate-100 cursor-pointer">
                     <BellIcon className="h-6 w-6 text-slate-600" />
                     <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
                   </div>
 
+                  {/* LOGIN */}
                   {!isLoggedIn && (
                     <NavLink
                       to="/auth"
@@ -116,16 +118,25 @@ export default function Navbar() {
                     </NavLink>
                   )}
 
-                  {isLoggedIn && !openProfile && (
+                  {/* PROFILE */}
+                  {isLoggedIn && (
                     <div
                       onClick={() => setOpenProfile(true)}
                       className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100 transition"
                     >
-                      <img
-                        src={profileImage}
-                        className="h-9 w-9 rounded-full"
-                        alt="profile"
-                      />
+                      {/* ✅ FIXED AVATAR */}
+                      <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
+                        {profileImage && profileImage !== "" ? (
+                          <img
+                            src={profileImage}
+                            className="h-full w-full object-cover"
+                            alt="profile"
+                          />
+                        ) : (
+                          <User className="h-5 w-5 text-slate-600" />
+                        )}
+                      </div>
+
                       <span className="hidden sm:block text-sm font-medium">
                         My Profile
                       </span>
@@ -135,6 +146,7 @@ export default function Navbar() {
               </div>
             </div>
 
+            {/* MOBILE */}
             <DisclosurePanel className="sm:hidden px-4 pb-4 space-y-2 bg-white shadow-md">
               {navigation.map((item) => (
                 <NavLink
@@ -150,110 +162,80 @@ export default function Navbar() {
         )}
       </Disclosure>
 
-      {isLoggedIn && openProfile &&
-  createPortal(
-    <>
-      {/* BACKDROP */}
-      <div
-        onClick={() => setOpenProfile(false)}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-9998 transition-opacity duration-300"
-      />
-
       {/* DRAWER */}
-      <div className={`fixed inset-y-0 right-0 w-85 bg-white z-9999 shadow-2xl
-        transform transition-transform duration-300 ease-out
-        ${openProfile ? "translate-x-0" : "translate-x-full"}`}>
-
-        {/* HEADER */}
-        <div className="flex items-center gap-3 p-5 border-b bg-linear-to-r from-slate-50 to-white">
-          <img
-            src={profileImage}
-            className="h-11 w-11 rounded-full ring-2 ring-slate-200"
-            alt="profile"
-          />
-
-          <div className="flex-1">
-            <p className="font-semibold text-[15px] text-slate-800 flex items-center gap-2">
-              Account
-              {isAdmin && (
-                <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full font-medium">
-                  ADMIN
-                </span>
-              )}
-            </p>
-
-            <p className="text-xs text-slate-500">
-              {isAdmin
-                ? "You have administrative privileges"
-                : "Manage your account settings"}
-            </p>
-          </div>
-
-          <button
-            onClick={() => setOpenProfile(false)}
-            className="text-slate-500 hover:text-black text-lg cursor-pointer font-semibold"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* BODY */}
-        <div className="p-4 space-y-2">
-
-          <NavLink
-            to="/userProfile"
-            onClick={() => setOpenProfile(false)}
-            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-          >
-            Profile Settings
-          </NavLink>
-
-          <NavLink
-            to="/registered-events"
-            onClick={() => setOpenProfile(false)}
-            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-          >
-            My Events
-          </NavLink>
-
-          <NavLink
-            to="/mentors"
-            onClick={() => setOpenProfile(false)}
-            className="block px-4 py-3 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition"
-          >
-            Mentorship
-          </NavLink>
-
-          {/* ADMIN SWITCH */}
-          {isAdmin && (
-            <NavLink
-              to="/admin"
+      {isLoggedIn && openProfile &&
+        createPortal(
+          <>
+            <div
               onClick={() => setOpenProfile(false)}
-              className="block px-4 py-3 rounded-lg text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"
-            >
-              Admin Dashboard
-            </NavLink>
-          )}
+              className="fixed inset-0 bg-black/40 z-40"
+            />
 
-          <div className="border-t my-3" />
+            <div className="fixed inset-y-0 right-0 w-80 bg-white z-50 shadow-xl">
 
-          {/* LOGOUT */}
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("roles");
-              window.location.href = "/auth";
-            }}
-            className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition"
-          >
-            Sign out
-          </button>
+              {/* HEADER */}
+              <div className="flex items-center gap-3 p-5 border-b">
 
-        </div>
-      </div>
-    </>,
-    document.body
-  )}
+                {/* ✅ FIXED AVATAR AGAIN */}
+                <div className="h-11 w-11 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
+                  {profileImage && profileImage !== "" ? (
+                    <img
+                      src={profileImage}
+                      className="h-full w-full object-cover"
+                      alt="profile"
+                    />
+                  ) : (
+                    <User className="h-6 w-6 text-slate-600" />
+                  )}
+                </div>
+
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-800 flex items-center gap-2">
+                    Account
+                    {isAdmin && (
+                      <span className="text-xs bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full">
+                        ADMIN
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setOpenProfile(false)}
+                  className="text-lg"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* BODY */}
+              <div className="p-4 space-y-2">
+                <NavLink to="/userProfile" className="block p-3 hover:bg-slate-100 rounded">
+                  Profile
+                </NavLink>
+
+                {isAdmin && (
+                  <NavLink to="/admin" className="block p-3 text-indigo-600 hover:bg-indigo-50 rounded">
+                    Admin Dashboard
+                  </NavLink>
+                )}
+
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    localStorage.removeItem("roles");
+                    window.location.href = "/auth";
+                  }}
+                  className="w-full text-left p-3 text-red-500 hover:bg-red-50 rounded"
+                >
+                  Logout
+                </button>
+              </div>
+
+            </div>
+          </>,
+          document.body
+        )}
     </>
   );
-}
+} 

@@ -28,9 +28,9 @@ public class UserController {
         return ResponseEntity.ok(userService.userPost());
     }
 
-    @PutMapping("/update-profile")
+    @PutMapping(value = "/update-profile", consumes = "multipart/form-data")
     public ResponseEntity<UserProfileResponseDto> updateUserProfile(
-            @RequestBody UserProfileRequestDto dto) {
+            @ModelAttribute UserProfileRequestDto dto) {
 
         return ResponseEntity.ok(userService.updateUserProfile(dto));
     }

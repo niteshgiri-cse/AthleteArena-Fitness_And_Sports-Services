@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useRef } from "react"; // ✅ added useRef
-import { Image, Video, Send } from "lucide-react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { Image, Video, Send, User } from "lucide-react";
 import PostCard from "./PostCard";
 import UploadModal from "./UploadModal";
 import { getFeed } from "@/api/mediaApi";
@@ -18,7 +18,7 @@ export default function Community() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const observerRef = useRef(null); // ✅ new
+  const observerRef = useRef(null);
 
   const dispatch = useDispatch();
   const { userProfile } = useSelector((state) => state.user || {});
@@ -51,12 +51,10 @@ export default function Community() {
     }
   }, [page, loading, hasMore]);
 
-  // ✅ Initial load (unchanged behavior)
   useEffect(() => {
     loadPosts();
   }, [loadPosts]);
 
-  // ✅ REPLACED SCROLL WITH OBSERVER (no UI change)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -109,21 +107,29 @@ export default function Community() {
     <div className="min-h-screen bg-slate-100 py-8 px-3">
       <div className="max-w-2xl mx-auto space-y-6">
 
+        {/* 🔥 CREATE POST BOX */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border space-y-4">
           <div className="flex gap-3 items-center">
-            <img
-              src={
-                userProfile?.profileImageUrl ||
-                "https://i.pravatar.cc/100"
-              }
-              className="h-10 w-10 rounded-full"
-            />
+
+            {/* ✅ FIXED AVATAR */}
+            <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
+              {userProfile?.profileImageUrl && userProfile.profileImageUrl !== "" ? (
+                <img
+                  src={userProfile.profileImageUrl}
+                  className="h-full w-full object-cover"
+                  alt="profile"
+                  onError={(e) => (e.target.style.display = "none")}
+                />
+              ) : (
+                <User className="h-5 w-5 text-slate-600" />
+              )}
+            </div>
 
             <input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Share something..."
-              className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm"
+              className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm outline-none"
             />
           </div>
 
@@ -134,7 +140,7 @@ export default function Community() {
                   setType("image");
                   setShowModal(true);
                 }}
-                className="flex gap-1 hover:text-indigo-500"
+                className="flex gap-1 hover:text-indigo-500 transition"
               >
                 <Image size={18} /> Photo
               </button>
@@ -144,7 +150,7 @@ export default function Community() {
                   setType("video");
                   setShowModal(true);
                 }}
-                className="flex gap-1 hover:text-indigo-500"
+                className="flex gap-1 hover:text-indigo-500 transition"
               >
                 <Video size={18} /> Video
               </button>
@@ -152,13 +158,14 @@ export default function Community() {
 
             <button
               onClick={handleSend}
-              className="bg-indigo-500 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm"
+              className="bg-indigo-500 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm hover:bg-indigo-600 transition"
             >
               <Send size={16} /> Post
             </button>
           </div>
         </div>
 
+        {/* POSTS */}
         {posts.map((post) => (
           <PostCard
             key={`${post.id}-${post.createdAt}`}
@@ -166,7 +173,7 @@ export default function Community() {
           />
         ))}
 
-        {/* ✅ invisible trigger (no UI change) */}
+        {/* OBSERVER */}
         <div ref={observerRef} className="h-10" />
 
         {loading && (
@@ -180,6 +187,7 @@ export default function Community() {
         )}
       </div>
 
+      {/* MODAL */}
       {showModal && (
         <UploadModal
           type={type}
