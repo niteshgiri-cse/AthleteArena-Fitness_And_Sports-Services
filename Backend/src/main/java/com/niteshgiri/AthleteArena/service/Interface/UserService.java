@@ -21,4 +21,8 @@ public interface UserService {
     MediaResponseDto updatePost(String postId, VideoRequestDto dto);
 
     void deletePostById(String postId);
+
+    UserProfileResponseDto getUserProfileById(String userId);
+
+    void toggleFollow(String userId);
 }

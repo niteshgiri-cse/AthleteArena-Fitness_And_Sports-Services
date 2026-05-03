@@ -6,12 +6,10 @@ import com.niteshgiri.AthleteArena.dto.response.FileResponseDto;
 import com.niteshgiri.AthleteArena.dto.response.MediaResponseDto;
 import com.niteshgiri.AthleteArena.model.MediaPost;
 import com.niteshgiri.AthleteArena.model.User;
+import com.niteshgiri.AthleteArena.model.UserProfile;
 import com.niteshgiri.AthleteArena.model.type.MediaCategory;
 import com.niteshgiri.AthleteArena.model.type.MediaType;
-import com.niteshgiri.AthleteArena.repository.CommentRepository;
-import com.niteshgiri.AthleteArena.repository.LikeRepository;
-import com.niteshgiri.AthleteArena.repository.MediaRepository;
-import com.niteshgiri.AthleteArena.repository.UserRepository;
+import com.niteshgiri.AthleteArena.repository.*;
 import com.niteshgiri.AthleteArena.service.Interface.CloudinaryMediaService;
 import com.niteshgiri.AthleteArena.service.Interface.MediaService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +36,7 @@ public class MediaServiceImpl implements MediaService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final AuthUtil authUtil;
+    private final UserProfileRepository userProfileRepository;
 
     private User getCurrentUser() {
         String email = authUtil.getCurrentUserEmail();
@@ -54,17 +53,31 @@ public class MediaServiceImpl implements MediaService {
     }
 
     private MediaResponseDto mapToDto(MediaPost media) {
+
+        User user = userRepository.findById(media.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserProfile profile = userProfileRepository
+                .findByUserId(user.getId())
+                .orElse(null);
+
         return MediaResponseDto.builder()
                 .id(media.getId())
-                .url(media.getUrl())
+                .url(media.getSecureUrl())
                 .mediaType(media.getMediaType().name())
                 .categories(media.getCategories())
                 .tags(media.getTags())
                 .title(media.getTitle())
                 .description(media.getDescription())
-                .createdAt(media.getCreatedAt()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime())
+                .username(user.getUsername())
+                .profileImageUrl(
+                        profile != null ? profile.getProfileImageUrl() : null
+                )
+                .createdAt(
+                        media.getCreatedAt()
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDateTime()
+                )
                 .build();
     }
 
@@ -127,6 +140,8 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public Page<FeedResponseDto> getFeed(int page, int size) {
 
+        String currentUserId = authUtil.getLoggedInUserId();
+
         Page<MediaPost> mediaPage =
                 mediaRepository.findAll(
                         PageRequest.of(page, size, Sort.by("createdAt").descending())
@@ -134,27 +149,41 @@ public class MediaServiceImpl implements MediaService {
 
         return mediaPage.map(media -> {
 
-            User user = userRepository.findById(media.getUserId()).orElseThrow();
+            User user = userRepository.findById(media.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            UserProfile profile = userProfileRepository
+                    .findByUserId(user.getId())
+                    .orElse(null);
 
             int commentCount = commentRepository.countByPostId(media.getId());
             int likeCount = likeRepository.countByPostId(media.getId());
 
-            return new FeedResponseDto(
+            boolean isLiked = likeRepository.existsByPostIdAndUserId(
                     media.getId(),
-                    media.getUrl(),
-                    user.getUsername(),
-                    user.getId(),
-                    media.getMediaType().name(),
-                    media.getCategories(),
-                    media.getTags(),
-                    media.getTitle(),
-                    media.getDescription(),
-                    commentCount,
-                    likeCount,
-                    media.getCreatedAt()
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDateTime()
+                    currentUserId
             );
+
+            return FeedResponseDto.builder()
+                    .id(media.getId())
+                    .url(media.getUrl())
+                    .username(user.getUsername())
+                    .userId(user.getId())
+                    .profileImageUrl(profile != null ? profile.getProfileImageUrl() : null)
+                    .mediaType(media.getMediaType().name())
+                    .categories(media.getCategories())
+                    .tags(media.getTags())
+                    .title(media.getTitle())
+                    .description(media.getDescription())
+                    .commentCount(commentCount)
+                    .likeCount(likeCount)
+                    .isLiked(isLiked)
+                    .createdAt(
+                            media.getCreatedAt()
+                                    .atZone(ZoneId.systemDefault())
+                                    .toLocalDateTime()
+                    )
+                    .build();
         });
     }
 

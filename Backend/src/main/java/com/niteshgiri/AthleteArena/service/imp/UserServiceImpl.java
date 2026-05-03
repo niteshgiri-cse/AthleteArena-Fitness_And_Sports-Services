@@ -228,4 +228,58 @@ public class UserServiceImpl implements UserService {
                 .createdAt(profile.getCreatedAt())
                 .build();
     }
+
+    @Override
+    public UserProfileResponseDto getUserProfileById(String userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        UserProfile profile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Profile not found"));
+
+        return UserProfileResponseDto.builder()
+                .userId(user.getId())
+                .name(profile.getName())
+                .email(user.getEmail())
+                .bio(profile.getBio())
+                .profileImageUrl(profile.getProfileImageUrl())
+                .backgroundImageUrl(profile.getBackgroundImageUrl())
+                .followersCount(profile.getFollowers().size())
+                .followingCount(profile.getFollowing().size())
+                .createdAt(profile.getCreatedAt())
+                .build();
+    }
+    @Override
+    public void toggleFollow(String targetUserId) {
+
+        String currentUserId = getUserEmail(); // or use AuthUtil
+
+        if (currentUserId.equals(targetUserId)) {
+            throw new RuntimeException("Cannot follow yourself");
+        }
+
+        UserProfile currentUser = userProfileRepository
+                .findByUserId(currentUserId)
+                .orElseThrow();
+
+        UserProfile targetUser = userProfileRepository
+                .findByUserId(targetUserId)
+                .orElseThrow();
+
+        if (currentUser.getFollowing().contains(targetUserId)) {
+
+            currentUser.getFollowing().remove(targetUserId);
+            targetUser.getFollowers().remove(currentUserId);
+
+        } else {
+
+            currentUser.getFollowing().add(targetUserId);
+            targetUser.getFollowers().add(currentUserId);
+        }
+
+        userProfileRepository.save(currentUser);
+        userProfileRepository.save(targetUser);
+    }
+
 }

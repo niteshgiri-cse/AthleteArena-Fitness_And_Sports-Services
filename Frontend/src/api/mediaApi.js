@@ -1,77 +1,51 @@
 import axios from "axios";
 import BASE_URL from "@/config/api";
 
-const publicAPI = axios.create({
+const API = axios.create({
   baseURL: BASE_URL,
 });
 
-// 🔐 Token attach
-publicAPI.interceptors.request.use(
-  (req) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      req.headers.Authorization = `Bearer ${token}`;
-    }
-    return req;
-  },
-  (error) => Promise.reject(error)
-);
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
+  if (token) req.headers.Authorization = `Bearer ${token}`;
+  return req;
+});
 
-// ================= UPLOAD IMAGE =================
-export const uploadImage = async ({ file, title, description, category, tags }) => {
-  try {
-    const formData = new FormData();
+/* ===== MEDIA ===== */
+export const uploadImage = (data) => {
+  const formData = new FormData();
+  formData.append("file", data.file);
+  formData.append("title", data.title);
+  formData.append("description", data.description);
 
-    formData.append("file", file);
-    formData.append("title", title);
-    formData.append("description", description);
+  data.category?.forEach((c) => formData.append("categories", c));
+  data.tags?.forEach((t) => formData.append("tags", t));
 
-    // ✅ categories fix
-    if (category && category.length > 0) {
-      category.forEach((c) => formData.append("categories", c));
-    }
-
-    if (tags && tags.length > 0) {
-      tags.forEach((tag) => formData.append("tags", tag));
-    }
-
-    const res = await publicAPI.post("/media/image", formData);
-    return res.data;
-
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return API.post("/media/image", formData);
 };
 
-// ================= UPLOAD VIDEO =================
-export const uploadVideo = async ({ file, title, description, category, tags }) => {
-  try {
-    const formData = new FormData();
+export const uploadVideo = (data) => {
+  const formData = new FormData();
+  formData.append("file", data.file);
+  formData.append("title", data.title);
+  formData.append("description", data.description);
 
-    formData.append("file", file);
-    formData.append("title", title);
-    formData.append("description", description);
+  data.category?.forEach((c) => formData.append("categories", c));
+  data.tags?.forEach((t) => formData.append("tags", t));
 
-    if (category && category.length > 0) {
-      category.forEach((c) => formData.append("categories", c));
-    }
-
-    if (tags && tags.length > 0) {
-      tags.forEach((tag) => formData.append("tags", tag));
-    }
-
-    const res = await publicAPI.post("/media/video", formData);
-    return res.data;
-
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return API.post("/media/video", formData);
 };
 
-export const getFeed = async (page = 0, size = 5) => {
-  return (await publicAPI.get(`/media/feed?page=${page}&size=${size}`)).data;
-};
+export const getFeed = (page = 0, size = 5) =>
+  API.get(`/media/feed?page=${page}&size=${size}`);
 
-export const deleteMedia = async (id) => {
-  return (await publicAPI.delete(`/media/${id}`)).data;
-};
+/* ===== SOCIAL ===== */
+export const toggleLike = (postId) =>
+  API.post(`/like/${postId}`);
+
+export const getComments = (postId) =>
+  API.get(`/comment/${postId}`);
+
+/* ✅ FIXED */
+export const addComment = (postId, data) =>
+  API.post(`/comment/${postId}`, data);

@@ -48,4 +48,14 @@ public class UserController {
         userService.deletePostById(postId);
         return ResponseEntity.ok("Post deleted successfully");
     }
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<UserProfileResponseDto> getUserProfileById(
+            @PathVariable String userId) {
+
+        return ResponseEntity.ok(userService.getUserProfileById(userId));
+    }
+    @PostMapping("/follow/{userId}")
+    public void followUser(@PathVariable String userId) {
+        userService.toggleFollow(userId);
+    }
 }

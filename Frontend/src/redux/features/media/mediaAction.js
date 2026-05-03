@@ -1,67 +1,59 @@
 import {
   fetchMedia,
   fetchMediaSuccess,
-  fetchMediaFailure
+  fetchMediaFailure,
+  appendMedia,
 } from "./mediaReducer";
 
-import {
-  getMyMedia,
-  getMyImages,
-  getMyVideos,
-  getFeed,
-  deleteMedia
-} from "@/api/mediaApi";
+import { getFeed, toggleLike } from "@/api/mediaApi";
 
-// ================= ALL =================
-export const getMyMediaAction = () => async (dispatch) => {
+/* ===== FEED WITH PAGINATION ===== */
+export const getFeedAction = (page = 0) => async (dispatch) => {
   try {
     dispatch(fetchMedia());
-    const data = await getMyMedia();
-    dispatch(fetchMediaSuccess(data));
-  } catch (error) {
-    dispatch(fetchMediaFailure(error));
+
+    const res = await getFeed(page);
+    const data = res?.data?.content || [];
+
+    if (page === 0) {
+      dispatch(fetchMediaSuccess(data));
+    } else {
+      dispatch(appendMedia(data));
+    }
+  } catch (err) {
+    console.error("Feed Error:", err);
+    dispatch(fetchMediaFailure(err?.message || "Failed to load feed"));
   }
 };
 
-// ================= IMAGES =================
-export const getMyImagesAction = () => async (dispatch) => {
+/* ===== LIKE (FIXED PROPERLY) ===== */
+export const toggleLikeAction = (postId) => async (dispatch, getState) => {
   try {
-    dispatch(fetchMedia());
-    const data = await getMyImages();
-    dispatch(fetchMediaSuccess(data));
-  } catch (error) {
-    dispatch(fetchMediaFailure(error));
-  }
-};
+    // ✅ Call API
+    await toggleLike(postId);
 
-// ================= VIDEOS =================
-export const getMyVideosAction = () => async (dispatch) => {
-  try {
-    dispatch(fetchMedia());
-    const data = await getMyVideos();
-    dispatch(fetchMediaSuccess(data));
-  } catch (error) {
-    dispatch(fetchMediaFailure(error));
-  }
-};
+    const { media } = getState();
 
-// ================= FEED =================
-export const getFeedAction = () => async (dispatch) => {
-  try {
-    dispatch(fetchMedia());
-    const data = await getFeed();
-    dispatch(fetchMediaSuccess(data));
-  } catch (error) {
-    dispatch(fetchMediaFailure(error));
-  }
-};
+    // ✅ Safe immutable update
+    const updatedPosts = media.posts.map((post) => {
+      if (post.id === postId) {
+        const isLiked = !post.isLiked;
 
-// ================= DELETE =================
-export const deleteMediaAction = (id) => async (dispatch) => {
-  try {
-    await deleteMedia(id);
-    dispatch(getMyMediaAction());
-  } catch (error) {
-    dispatch(fetchMediaFailure(error));
+        return {
+          ...post,
+          isLiked,
+          likeCount: isLiked
+            ? post.likeCount + 1
+            : Math.max(post.likeCount - 1, 0),
+        };
+      }
+      return post;
+    });
+
+    // ✅ IMPORTANT: don't break pagination
+    dispatch(fetchMediaSuccess(updatedPosts));
+
+  } catch (err) {
+    console.error("Like Error:", err);
   }
 };

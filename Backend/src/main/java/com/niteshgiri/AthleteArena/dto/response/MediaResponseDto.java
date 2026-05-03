@@ -12,6 +12,8 @@ import java.util.Set;
 public class MediaResponseDto {
 
     private String id;
+    private String profileImageUrl;
+    private String username;
     private String url;
     private String mediaType;
     private Set<MediaCategory> categories;

@@ -40,10 +40,6 @@ public class MediaPost {
     @Builder.Default
     private Set<String> tags = new HashSet<>();
 
-    @Builder.Default
-    private Set<String> likes = new HashSet<>();
-
-    private int commentCount;
     @CreatedDate
     private Instant createdAt;
 

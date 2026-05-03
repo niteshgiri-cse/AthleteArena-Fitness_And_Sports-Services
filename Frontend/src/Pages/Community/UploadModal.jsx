@@ -120,7 +120,7 @@ export default function UploadModal({ type, setPosts, onClose }) {
 
       // ✅ SAFE CALL (fix)
       if (typeof setPosts === "function") {
-        setPosts((prev) => [res, ...prev]);
+        setPosts((prev) => [res.data, ...prev]);
       }
 
       setSuccessMsg("✅ Upload successful");

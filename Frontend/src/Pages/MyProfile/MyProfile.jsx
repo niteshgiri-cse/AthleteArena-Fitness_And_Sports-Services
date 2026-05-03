@@ -10,7 +10,7 @@ import {
   getMyPostAction,
 } from "@/redux/features/user/userActions";
 
-export default function UserProfile() {
+export default function MyProfile() {
   const dispatch = useDispatch();
 
   const { userProfile, userPost, loading, error } = useSelector(

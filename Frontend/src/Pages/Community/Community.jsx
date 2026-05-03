@@ -1,18 +1,16 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { Image, Video, Send, User } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Image, Video, Send } from "lucide-react";
 import PostCard from "./PostCard";
 import UploadModal from "./UploadModal";
 import { getFeed } from "@/api/mediaApi";
-
 import { useSelector, useDispatch } from "react-redux";
 import { getProfileAction } from "@/redux/features/user/userActions";
 
 export default function Community() {
   const [posts, setPosts] = useState([]);
   const [caption, setCaption] = useState("");
-
   const [showModal, setShowModal] = useState(false);
-  const [type, setType] = useState("");
+  const [type, setType] = useState("image");
 
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -27,122 +25,88 @@ export default function Community() {
     dispatch(getProfileAction());
   }, [dispatch]);
 
-  const loadPosts = useCallback(async () => {
+  const loadPosts = async () => {
     if (loading || !hasMore) return;
 
     setLoading(true);
     try {
       const res = await getFeed(page);
+      const newPosts = res.data.content || [];
 
       setPosts((prev) => {
-        const merged = [...prev, ...res.content];
-        const unique = Array.from(
+        const merged = [...prev, ...newPosts];
+        return Array.from(
           new Map(merged.map((item) => [item.id, item])).values()
         );
-        return unique;
       });
 
       setPage((prev) => prev + 1);
-      if (res.last) setHasMore(false);
+
+      if (res.data.last) setHasMore(false);
     } catch (err) {
-      console.error("Feed error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [page, loading, hasMore]);
+  };
 
   useEffect(() => {
     loadPosts();
-  }, [loadPosts]);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loading) {
+        if (entries[0].isIntersecting && !loading && hasMore) {
           loadPosts();
         }
       },
-      { threshold: 1.0 }
+      { threshold: 1 }
     );
 
-    if (observerRef.current) {
-      observer.observe(observerRef.current);
-    }
+    if (observerRef.current) observer.observe(observerRef.current);
 
     return () => {
-      if (observerRef.current) {
-        observer.unobserve(observerRef.current);
-      }
+      if (observerRef.current) observer.unobserve(observerRef.current);
     };
-  }, [loadPosts, hasMore, loading]);
-
-  const handleSend = async () => {
-    if (!caption.trim()) return;
-
-    console.log("Caption:", caption);
-    setCaption("");
-
-    await refreshFeed();
-  };
-
-  const refreshFeed = async () => {
-    setPosts([]);
-    setPage(0);
-    setHasMore(true);
-
-    setLoading(true);
-    try {
-      const res = await getFeed(0);
-      setPosts(res.content);
-      setPage(1);
-      if (res.last) setHasMore(false);
-    } catch (err) {
-      console.error("Feed error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loading, hasMore]);
 
   return (
     <div className="min-h-screen bg-slate-100 py-8 px-3">
       <div className="max-w-2xl mx-auto space-y-6">
 
-        {/* 🔥 CREATE POST BOX */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border space-y-4">
-          <div className="flex gap-3 items-center">
+        {/* CREATE POST */}
+        <div className="bg-white p-4 rounded-xl border shadow-sm">
 
-            {/* ✅ FIXED AVATAR */}
-            <div className="h-10 w-10 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
-              {userProfile?.profileImageUrl && userProfile.profileImageUrl !== "" ? (
-                <img
-                  src={userProfile.profileImageUrl}
-                  className="h-full w-full object-cover"
-                  alt="profile"
-                  onError={(e) => (e.target.style.display = "none")}
-                />
-              ) : (
-                <User className="h-5 w-5 text-slate-600" />
-              )}
-            </div>
+          <div className="flex gap-3 items-center">
+            <img
+              src={
+                userProfile?.profileImageUrl ||
+                "https://ui-avatars.com/api/?name=User"
+              }
+              className="w-10 h-10 rounded-full object-cover"
+            />
 
             <input
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Share something..."
-              className="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm outline-none"
+              className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm outline-none"
             />
           </div>
 
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4 text-gray-600 text-sm">
+          <div className="flex justify-between items-center mt-4">
+
+            <div className="flex gap-6 text-gray-600">
               <button
                 onClick={() => {
                   setType("image");
                   setShowModal(true);
                 }}
-                className="flex gap-1 hover:text-indigo-500 transition"
+                className="flex items-center gap-2 hover:text-indigo-500"
               >
-                <Image size={18} /> Photo
+                <Image size={18} />
+                <span>Photo</span>
               </button>
 
               <button
@@ -150,52 +114,50 @@ export default function Community() {
                   setType("video");
                   setShowModal(true);
                 }}
-                className="flex gap-1 hover:text-indigo-500 transition"
+                className="flex items-center gap-2 hover:text-indigo-500"
               >
-                <Video size={18} /> Video
+                <Video size={18} />
+                <span>Video</span>
               </button>
             </div>
 
+            {/* ✅ FIXED POST BUTTON */}
             <button
-              onClick={handleSend}
-              className="bg-indigo-500 text-white px-4 py-1.5 rounded-full flex gap-1 text-sm hover:bg-indigo-600 transition"
+              onClick={() => {
+                if (!caption.trim()) {
+                  alert("Write something first");
+                  return;
+                }
+
+                setType("image");
+                setShowModal(true);
+              }}
+              className="flex items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white px-5 py-2 rounded-full"
             >
-              <Send size={16} /> Post
+              <Send size={16} />
+              <span>Post</span>
             </button>
           </div>
         </div>
 
         {/* POSTS */}
-        {posts.map((post) => (
-          <PostCard
-            key={`${post.id}-${post.createdAt}`}
-            post={post}
-          />
+        {posts.map((post, index) => (
+          <PostCard key={post.id || index} post={post} />
         ))}
 
-        {/* OBSERVER */}
         <div ref={observerRef} className="h-10" />
 
-        {loading && (
-          <p className="text-center text-gray-500">Loading...</p>
-        )}
-
-        {!hasMore && (
-          <p className="text-center text-gray-400 text-sm">
-            No more posts
-          </p>
-        )}
+        {loading && <p className="text-center">Loading...</p>}
+        {!hasMore && <p className="text-center">No more posts</p>}
       </div>
 
       {/* MODAL */}
       {showModal && (
         <UploadModal
           type={type}
+          caption={caption}   // ✅ PASS CAPTION
           setPosts={setPosts}
-          onClose={() => {
-            setShowModal(false);
-            refreshFeed();
-          }}
+          onClose={() => setShowModal(false)}
         />
       )}
     </div>

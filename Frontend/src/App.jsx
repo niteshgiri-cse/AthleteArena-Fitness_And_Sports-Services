@@ -24,7 +24,7 @@ import ManageUsers from "./Pages/Admin/ManageUsers";
 import Reports from "./Pages/Admin/Reports";
 
 import PageNotFound from "./Pages/NotFound/PageNotFound";
-import UserProfile from "./Pages/UserProfile/UserProfile";
+import MyProfile from "./Pages/MyProfile/MyProfile";
 import GoLive from "./Pages/GoLive/GoLive";
 import AdminUpload from "./Pages/Admin/AdminUpload";
 import CoursePlayer from "./Pages/LearningCenter/CoursePlayer";
@@ -48,7 +48,7 @@ export default function App() {
           {/* 🔐 PROTECTED (USER + ADMIN) */}
           <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
 
-            <Route path="/userProfile" element={<UserProfile />} />
+            <Route path="/userProfile" element={<MyProfile />} />
             <Route path="/sport-category" element={<SportsCategories />} />
             <Route path="/community" element={<Community />} />
             <Route path="/recent-new" element={<RecentNews />} />
