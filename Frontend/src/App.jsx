@@ -39,15 +39,13 @@ export default function App() {
         {/* 🔓 PUBLIC */}
         <Route path="/auth" element={<Auth />} />
 
-        {/* 🌐 MAIN LAYOUT (NAVBAR + FOOTER) */}
+        {/* 🌐 MAIN LAYOUT */}
         <Route element={<MainLayout />}>
 
-          {/* ✅ HOME (PUBLIC + NAVBAR) */}
           <Route path="/" element={<Home />} />
 
-          {/* 🔐 PROTECTED (USER + ADMIN) */}
+          {/* 🔐 USER + ADMIN */}
           <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
-
             <Route path="/userProfile" element={<MyProfile />} />
             <Route path="/sport-category" element={<SportsCategories />} />
             <Route path="/community" element={<Community />} />
@@ -57,26 +55,31 @@ export default function App() {
             <Route path="/live-learning" element={<LearningCenter />} />
             <Route path="/athlete-blogs" element={<AthleteBlogs />} />
             <Route path="/training-guides" element={<TrainingGuides />} />
-
           </Route>
+
         </Route>
 
-        {/* 🎥 FULLSCREEN (NO NAVBAR / FOOTER) */}
+        {/* 🎥 FULLSCREEN */}
         <Route element={<ProtectedRoute allowedRoles={["USER", "ADMIN"]} />}>
           <Route path="/course/:id" element={<CoursePlayer />} />
           <Route path="/live/:roomId" element={<GoLive />} />
         </Route>
 
-        {/* 🛠 ADMIN (NO NAVBAR / FOOTER) */}
-        <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="notification" element={<AdminNotification />} />
-            <Route path="register-event" element={<RegisterEvent />} />
-            <Route path="bookings" element={<ManageUsers />} />
-            <Route path="reports" element={<Reports />} />
-            <Route path="upload-course" element={<AdminUpload />} />
-          </Route>
+        {/* 🔥 FINAL ADMIN ROUTE FIX */}
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={["ADMIN"]}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Dashboard />} />
+          <Route path="notification" element={<AdminNotification />} />
+          <Route path="register-event" element={<RegisterEvent />} />
+          <Route path="bookings" element={<ManageUsers />} />
+          <Route path="reports" element={<Reports />} />
+          <Route path="upload-course" element={<AdminUpload />} />
         </Route>
 
         {/* ❌ 404 */}

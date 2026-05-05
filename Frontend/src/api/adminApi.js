@@ -7,9 +7,11 @@ const adminAPI = axios.create({
 
 adminAPI.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
-  if (token) {
+
+  if (token && token !== "null" && token !== "undefined") {
     req.headers.Authorization = `Bearer ${token}`;
   }
+
   return req;
 });
 
@@ -20,23 +22,25 @@ export const getAdminProfile = async () => {
 };
 
 export const updateAdminProfile = async (data) => {
-  const res = await adminAPI.put("/admin/update-details", data);
+  const res = await adminAPI.put("/admin/update-details", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
 // EVENT
 export const createEvent = async (data) => {
-  const res = await adminAPI.post("/admin/create-event", data);
+  const res = await adminAPI.post("/admin/create-event", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return res.data;
 };
 
-// ✅ FINAL COURSE API FIX
+// COURSE
 export const createCourse = async (data) => {
   const res = await adminAPI.post("/admin/create-course", data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-    transformRequest: [(data) => data], // 🔥 VERY IMPORTANT
+    headers: { "Content-Type": "multipart/form-data" },
+    transformRequest: [(data) => data],
   });
   return res.data;
 };
@@ -52,7 +56,6 @@ export const registerAdmin = async (data) => {
   const res = await adminAPI.post("/admin/register-new-admin", data);
   return res.data;
 };
-// ================= COURSE =================
 
 // DELETE COURSE
 export const deleteCourse = async (videoId) => {
@@ -63,15 +66,10 @@ export const deleteCourse = async (videoId) => {
 // UPDATE COURSE
 export const updateCourse = async (videoId, data) => {
   const res = await adminAPI.put(`/admin/course/${videoId}`, data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };
-
-
-// ================= EVENT =================
 
 // DELETE EVENT
 export const deleteEvent = async (eventId) => {
@@ -82,9 +80,7 @@ export const deleteEvent = async (eventId) => {
 // UPDATE EVENT
 export const updateEvent = async (eventId, data) => {
   const res = await adminAPI.put(`/admin/event/${eventId}`, data, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };

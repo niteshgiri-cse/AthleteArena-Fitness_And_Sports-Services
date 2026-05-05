@@ -9,7 +9,6 @@ import {
 const AdminProfile = () => {
   const dispatch = useDispatch();
   const { adminProfile } = useSelector((state) => state.admin);
-  console.log(adminProfile);
   const [edit, setEdit] = useState(false);
 
   const [user, setUser] = useState({
@@ -89,7 +88,7 @@ const AdminProfile = () => {
           <div className="text-center">
             <div className="relative w-24 h-24 mx-auto">
               <img
-                src={user.profileUrl}
+                src={user?.profileUrl}
                 alt="profile"
                 className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
               />
@@ -107,10 +106,10 @@ const AdminProfile = () => {
               )}
             </div>
 
-            <h2 className="mt-4 text-lg font-semibold">{user.name}</h2>
+            <h2 className="mt-4 text-lg font-semibold">{user?.name}</h2>
 
             <span className="inline-flex items-center gap-1 text-xs bg-white/20 px-3 py-1 rounded-full mt-2">
-              <FiShield /> {user.role}
+              <FiShield /> {user?.role}
             </span>
           </div>
 
@@ -131,28 +130,28 @@ const AdminProfile = () => {
             <FormField
               label="Full Name"
               name="name"
-              value={user.name}
+              value={user?.name}
               edit={edit}
               onChange={handleChange}
             />
             <FormField
               label="Email"
               name="email"
-              value={user.email}
+              value={user?.email}
               edit={edit}
               onChange={handleChange}
             />
             <FormField
               label="Phone"
               name="phone"
-              value={user.phone}
+              value={user?.phone}
               edit={edit}
               onChange={handleChange}
             />
             <FormField
               label="Location"
               name="location"
-              value={user.location}
+              value={user?.location}
               edit={edit}
               onChange={handleChange}
             />

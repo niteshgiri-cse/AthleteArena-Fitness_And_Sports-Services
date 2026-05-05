@@ -1,33 +1,33 @@
-import { Navigate, Outlet } from "react-router-dom";
+  import { Navigate, Outlet } from "react-router-dom";
 
-const isTokenValid = (token) => {
-  try {
-    if (!token) return false;
+  const ProtectedRoute = ({ allowedRoles, children }) => {
+    const token = localStorage.getItem("token");
 
-    const decoded = JSON.parse(atob(token.split(".")[1]));
-    return decoded.exp * 1000 > Date.now();
-  } catch {
-    return false;
-  }
-};
+    if (!token) return <Navigate to="/auth" replace />;
 
-const ProtectedRoute = ({ allowedRoles }) => {
-  const token = localStorage.getItem("token");
-  const roles = JSON.parse(localStorage.getItem("roles"));
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      const roles = decoded.roles || [];
 
-  // ❌ invalid or expired token
-  if (!isTokenValid(token)) {
-    localStorage.removeItem("token");
-    localStorage.removeItem("roles");
-    return <Navigate to="/auth" replace />;
-  }
+      console.log("JWT ROLES:", roles); // debug
 
-  // ❌ role check (only if provided)
-  if (allowedRoles && !roles?.some(r => allowedRoles.includes(r))) {
-    return <Navigate to="/" replace />;
-  }
+      const isAllowed = roles.some((role) =>
+        allowedRoles.includes(role)
+      );
 
-  return <Outlet />;
-};
+      if (!isAllowed) {
+        console.log("BLOCKED ❌");
+        return <Navigate to="/" replace />;
+      }
 
-export default ProtectedRoute;
+      console.log("ALLOWED ✅");
+
+      // 🔥 IMPORTANT FIX
+      return children ? children : <Outlet />;
+    } catch (err) {
+      console.error("TOKEN ERROR:", err);
+      return <Navigate to="/auth" replace />;
+    }
+  };
+
+  export default ProtectedRoute;

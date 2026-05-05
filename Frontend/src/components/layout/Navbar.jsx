@@ -42,8 +42,30 @@ export default function Navbar() {
   const token = localStorage.getItem("token");
   const isLoggedIn = isTokenValid(token);
 
-  const roles = JSON.parse(localStorage.getItem("roles") || "[]");
-  const isAdmin = roles.includes("ADMIN");
+  // 🔥 JWT BASED ADMIN CHECK (ONLY ADDITION)
+  let isAdmin = false;
+
+  try {
+    if (token && token !== "undefined" && token !== "null") {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+
+      let roles = decoded.roles;
+
+      if (typeof roles === "string") {
+        roles = roles
+          .replace("[", "")
+          .replace("]", "")
+          .split(",")
+          .map((r) => r.trim());
+      }
+
+      if (Array.isArray(roles)) {
+        isAdmin = roles.includes("ADMIN");
+      }
+    }
+  } catch {
+    isAdmin = false;
+  }
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -124,7 +146,6 @@ export default function Navbar() {
                       onClick={() => setOpenProfile(true)}
                       className="flex items-center gap-2 rounded-full p-1 pr-3 cursor-pointer hover:bg-slate-100 transition"
                     >
-                      {/* ✅ FIXED AVATAR */}
                       <div className="h-9 w-9 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
                         {profileImage && profileImage !== "" ? (
                           <img
@@ -173,10 +194,7 @@ export default function Navbar() {
 
             <div className="fixed inset-y-0 right-0 w-80 bg-white z-50 shadow-xl">
 
-              {/* HEADER */}
               <div className="flex items-center gap-3 p-5 border-b">
-
-                {/* ✅ FIXED AVATAR AGAIN */}
                 <div className="h-11 w-11 rounded-full overflow-hidden bg-slate-200 flex items-center justify-center">
                   {profileImage && profileImage !== "" ? (
                     <img
@@ -208,7 +226,6 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* BODY */}
               <div className="p-4 space-y-2">
                 <NavLink to="/userProfile" className="block p-3 hover:bg-slate-100 rounded">
                   Profile
@@ -238,4 +255,4 @@ export default function Navbar() {
         )}
     </>
   );
-} 
+}

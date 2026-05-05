@@ -4,39 +4,58 @@ import axios from "axios";
 const publicAPI = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Content-Type": "application/json"
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 const privateAPI = axios.create({
   baseURL: BASE_URL,
   headers: {
-    "Content-Type": "application/json"
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 privateAPI.interceptors.request.use(
   (req) => {
     const token = localStorage.getItem("token");
-    if (token) {
+
+    if (token && token !== "null" && token !== "undefined") {
       req.headers.Authorization = `Bearer ${token}`;
     }
+
     return req;
   },
   (error) => Promise.reject(error)
 );
 
-export const signupUser = (data) =>
-  publicAPI.post("/auth/signup", {
+export const signupUser = async (data) => {
+  const res = await publicAPI.post("/auth/signup", {
     name: data.name?.trim(),
     email: data.email?.trim(),
-    password: data.password?.trim()
+    password: data.password?.trim(),
   });
 
-export const loginUser = (data) =>
-  publicAPI.post("/auth/login", {
+  return res.data;
+};
+
+export const loginUser = async (data) => {
+  const res = await publicAPI.post("/auth/login", {
     email: data.email?.trim(),
-    password: data.password?.trim()
+    password: data.password?.trim(),
   });
 
-export const getProfile = () => privateAPI.get("/profile");
+  if (res.data?.jwt) {
+    localStorage.setItem("token", res.data.jwt);
+  }
+
+  return res.data;
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem("token");
+};
+
+export const getProfile = async () => {
+  const res = await privateAPI.get("/profile");
+  return res.data;
+};

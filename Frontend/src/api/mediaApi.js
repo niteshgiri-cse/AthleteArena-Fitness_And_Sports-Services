@@ -7,12 +7,16 @@ const API = axios.create({
 
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
-  if (token) req.headers.Authorization = `Bearer ${token}`;
+
+  if (token && token !== "null" && token !== "undefined") {
+    req.headers.Authorization = `Bearer ${token}`;
+  }
+
   return req;
 });
 
-/* ===== MEDIA ===== */
-export const uploadImage = (data) => {
+/* MEDIA */
+export const uploadImage = async (data) => {
   const formData = new FormData();
   formData.append("file", data.file);
   formData.append("title", data.title);
@@ -21,10 +25,14 @@ export const uploadImage = (data) => {
   data.category?.forEach((c) => formData.append("categories", c));
   data.tags?.forEach((t) => formData.append("tags", t));
 
-  return API.post("/media/image", formData);
+  const res = await API.post("/media/image", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data;
 };
 
-export const uploadVideo = (data) => {
+export const uploadVideo = async (data) => {
   const formData = new FormData();
   formData.append("file", data.file);
   formData.append("title", data.title);
@@ -33,19 +41,30 @@ export const uploadVideo = (data) => {
   data.category?.forEach((c) => formData.append("categories", c));
   data.tags?.forEach((t) => formData.append("tags", t));
 
-  return API.post("/media/video", formData);
+  const res = await API.post("/media/video", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+  return res.data;
 };
 
-export const getFeed = (page = 0, size = 5) =>
-  API.get(`/media/feed?page=${page}&size=${size}`);
+export const getFeed = async (page = 0, size = 5) => {
+  const res = await API.get(`/media/feed?page=${page}&size=${size}`);
+  return res.data;
+};
 
-/* ===== SOCIAL ===== */
-export const toggleLike = (postId) =>
-  API.post(`/like/${postId}`);
+/* SOCIAL */
+export const toggleLike = async (postId) => {
+  const res = await API.post(`/like/${postId}`);
+  return res.data;
+};
 
-export const getComments = (postId) =>
-  API.get(`/comment/${postId}`);
+export const getComments = async (postId) => {
+  const res = await API.get(`/comment/${postId}`);
+  return res.data;
+};
 
-/* ✅ FIXED */
-export const addComment = (postId, data) =>
-  API.post(`/comment/${postId}`, data);
+export const addComment = async (postId, data) => {
+  const res = await API.post(`/comment/${postId}`, data);
+  return res.data;
+};

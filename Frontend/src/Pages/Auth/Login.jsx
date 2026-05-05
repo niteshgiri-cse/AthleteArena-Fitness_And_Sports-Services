@@ -17,7 +17,7 @@ export default function Login({ setView }) {
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const navigate = useNavigate(); // keep (no removal)
 
   const onChange = (e) => {
     setForm((prev) => ({
@@ -43,9 +43,9 @@ export default function Login({ setView }) {
   const submit = async (e) => {
     e.preventDefault();
 
-    if (loading) return; // 🔒 prevent double click
-
+    if (loading) return;
     const validationErrors = validate();
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       toast.error("Please fix the errors");
@@ -58,35 +58,51 @@ export default function Login({ setView }) {
 
     try {
       const res = await loginUser({
-        email: form.email.trim().toLowerCase(),
+        email: form.email.trim(),
         password: form.password.trim(),
       });
 
-      const { jwt: token, roles = [], id } = res.data;
+      console.log("LOGIN RESPONSE:", res);
 
-      // ✅ save safely
+      const data = res?.data ? res.data : res;
+
+      const { jwt: token, roles, id } = data;
+
+      let safeRoles = [];
+
+      if (Array.isArray(roles)) {
+        safeRoles = roles;
+      } else if (typeof roles === "string") {
+        safeRoles = roles
+          .replace("[", "")
+          .replace("]", "")
+          .split(",")
+          .map((r) => r.trim());
+      }
+
+      // 🔥 store token
       localStorage.setItem("token", token);
-      localStorage.setItem("roles", JSON.stringify(roles));
 
       dispatch(
         loginSuccess({
-          user: { id, roles },
+          user: { id, roles: safeRoles },
           token,
         })
       );
 
       toast.success("Login successful 🎉");
 
-      // 🔥 smooth redirect (no flicker)
-      requestAnimationFrame(() => {
-        if (roles.includes("ADMIN")) {
-          navigate("/admin", { replace: true });
-        } else {
-          navigate("/", { replace: true });
-        }
-      });
+      // 🔥 FINAL FIX (IMPORTANT)
+      const isAdmin = safeRoles.includes("ADMIN");
+
+      if (isAdmin) {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/";
+      }
 
     } catch (err) {
+      console.error("LOGIN ERROR:", err);
       dispatch(loginFailure());
       toast.error(
         err.response?.data?.message || "Invalid email or password"
@@ -103,7 +119,6 @@ export default function Login({ setView }) {
     >
       <h2 className="text-3xl font-semibold">Sign in to your account</h2>
 
-      {/* Email */}
       <div>
         <input
           name="email"
@@ -118,7 +133,6 @@ export default function Login({ setView }) {
         )}
       </div>
 
-      {/* Password */}
       <div className="relative">
         <input
           name="password"
@@ -137,7 +151,6 @@ export default function Login({ setView }) {
         </span>
       </div>
 
-      {/* Button */}
       <button
         type="submit"
         disabled={loading}
@@ -151,7 +164,6 @@ export default function Login({ setView }) {
         {loading ? "Signing in..." : "Sign in"}
       </button>
 
-      {/* Google */}
       <button
         type="button"
         className="w-full border p-3 rounded-lg flex items-center justify-center gap-3 cursor-pointer active:scale-95 transition-transform"
@@ -163,7 +175,6 @@ export default function Login({ setView }) {
         Continue with Google
       </button>
 
-      {/* Links */}
       <p
         onClick={() => setView("forgot")}
         className="text-indigo-600 text-sm cursor-pointer active:scale-95"
