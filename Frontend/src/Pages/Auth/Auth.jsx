@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Login from "./Login";
-import Signup from "./SignUp";
+import SignUp from "./SignUp";
 import ForgotPassword from "./ForgetForm";
 
 
@@ -20,7 +20,7 @@ export default function Auth() {
       <div className="w-full md:w-1/2 h-screen flex items-center justify-center">
         <div className="w-full max-w-md px-6">
           {view === "login" && <Login setView={setView} />}
-          {view === "signup" && <Signup setView={setView} />}
+          {view === "signup" && <SignUp setView={setView} />}
           {view === "forgot" && <ForgotPassword setView={setView} />}
         </div>
       </div>

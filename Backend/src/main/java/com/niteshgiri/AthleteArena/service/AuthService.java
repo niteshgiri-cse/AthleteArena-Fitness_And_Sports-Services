@@ -79,26 +79,11 @@ public class AuthService {
 
             return new LoginResponseDto(
                     user.getId(),
-                    token,
-                    user.getRoles()
+                    token
             );
 
         } catch (BadCredentialsException e) {
             throw new RuntimeException("Invalid email or password");
         }
-    }
-
-    // OPTIONAL (only if you really want separate admin login)
-    public LoginResponseDto adminLogin(LoginRequestDto dto) {
-        LoginResponseDto response = login(dto);
-
-        User user = userRepository.findById(response.getId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (!user.getRoles().contains(RoleType.ADMIN)) {
-            throw new RuntimeException("Access denied: Admin only");
-        }
-
-        return response;
     }
 }

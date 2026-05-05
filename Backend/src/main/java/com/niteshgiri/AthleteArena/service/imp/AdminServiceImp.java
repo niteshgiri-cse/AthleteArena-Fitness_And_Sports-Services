@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('ADMIN')")
 @RequiredArgsConstructor
 public class AdminServiceImp implements AdminService {
     private final AdminRepository adminRepository;

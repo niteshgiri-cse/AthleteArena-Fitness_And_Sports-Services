@@ -12,9 +12,9 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+
 @Component
 public class AuthUtil {
-
 
     @Value("${jwt.secretKey}")
     private String secretKey;
@@ -26,8 +26,8 @@ public class AuthUtil {
     public String generateAccessToken(User user){
         return Jwts.builder()
                 .subject(user.getEmail())
-                .claim("userId",user.getId().toString())
-                .claim("roles",user.getRoles().toString())
+                .claim("userId", user.getId())
+                .claim("roles", user.getRoles())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+1000*60*60))
                 .signWith(getSecretkey())
@@ -35,7 +35,7 @@ public class AuthUtil {
     }
 
     public String getEmailFromToken(String token){
-        Claims claims=Jwts.parser()
+        Claims claims = Jwts.parser()
                 .verifyWith(getSecretkey())
                 .build()
                 .parseSignedClaims(token)
@@ -43,8 +43,17 @@ public class AuthUtil {
         return claims.getSubject();
     }
 
+    // 🔥 ADD THIS METHOD (FINAL FIX)
+    public Claims getAllClaims(String token){
+        return Jwts.parser()
+                .verifyWith(getSecretkey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     public String getCurrentUserEmail(){
-        Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
     }
 
@@ -53,5 +62,4 @@ public class AuthUtil {
         User user = (User) auth.getPrincipal();
         return user.getId();
     }
-
 }
