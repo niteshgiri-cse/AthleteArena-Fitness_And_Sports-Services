@@ -1,5 +1,6 @@
 package com.niteshgiri.AthleteArena.config;
 
+import com.niteshgiri.AthleteArena.model.User;
 import com.niteshgiri.AthleteArena.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -33,6 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         try {
+
             String authHeader = request.getHeader("Authorization");
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -44,24 +46,30 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             String email = authUtil.getEmailFromToken(token);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (email != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 Claims claims = authUtil.getAllClaims(token);
 
                 List<String> roles = claims.get("roles", List.class);
 
-                List<GrantedAuthority> authorities = roles.stream()
-                        .map(role -> (GrantedAuthority) new SimpleGrantedAuthority(role))
+                List<SimpleGrantedAuthority> authorities = roles.stream()
+                        .map(SimpleGrantedAuthority::new)
                         .toList();
+
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException("User not found"));
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
-                                email,
+                                user,
                                 null,
                                 authorities
                         );
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authToken);
             }
 
             filterChain.doFilter(request, response);

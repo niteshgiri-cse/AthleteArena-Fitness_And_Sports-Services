@@ -1,108 +1,351 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
-const courseData = {
-  1: {
-    title: "Football Training Course",
-    videos: [
-      { id: 1, title: "Introduction", youtubeId: "j-NhORwJDb4" },
-      { id: 2, title: "Warmup Training", youtubeId: "3JZ_D3ELwOQ" },
-      { id: 3, title: "Dribbling Skills", youtubeId: "LXb3EKWsInQ" },
-    ],
-  },
-  2: {
-    title: "Gym Training",
-    videos: [
-      { id: 1, title: "Chest Workout", youtubeId: "eX2qFMC8cFo" },
-      { id: 2, title: "Leg Day", youtubeId: "UItWltVZZmE" },
-    ],
-  },
-};
+import { getAllVideosAction } from "@/redux/features/course/courseAction";
 
 const CoursePlayer = () => {
-  const { id } = useParams();
-  const course = courseData[id] || courseData[1];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const currentVideo = course.videos[currentIndex];
+  const { id } = useParams();
+
+  const dispatch = useDispatch();
+
+  const {
+    courses,
+    loading,
+  } = useSelector(
+    (state) => state.course
+  );
+
+  // ================= FETCH VIDEOS =================
+
+  useEffect(() => {
+
+    dispatch(getAllVideosAction());
+
+  }, [dispatch]);
+
+  // ================= CURRENT VIDEO =================
+
+  const [currentVideo, setCurrentVideo] =
+    useState(null);
+
+  // ================= SET SELECTED VIDEO =================
+
+  useEffect(() => {
+
+    if (
+      courses &&
+      courses.length > 0
+    ) {
+
+      const selected =
+        courses.find(
+          (item) =>
+            String(item.videoId) ===
+            String(id)
+        );
+
+      setCurrentVideo(
+        selected || courses[0]
+      );
+    }
+
+  }, [courses, id]);
+
+  // ================= YOUTUBE ID FIX =================
+
+  const getYoutubeId = (url) => {
+
+    if (!url) return "";
+
+    try {
+
+      // FULL YOUTUBE URL
+      if (
+        url.includes(
+          "youtube.com"
+        )
+      ) {
+
+        const parsed =
+          new URL(url);
+
+        return parsed.searchParams.get(
+          "v"
+        );
+      }
+
+      // SHORT URL
+      if (
+        url.includes(
+          "youtu.be/"
+        )
+      ) {
+
+        return url.split(
+          "youtu.be/"
+        )[1];
+      }
+
+      // already video ID
+      return url;
+
+    } catch (err) {
+
+      return url;
+    }
+  };
+
+  // ================= LOADING =================
+
+  if (
+    loading ||
+    !currentVideo
+  ) {
+
+    return (
+      <div className="h-screen flex items-center justify-center text-2xl font-bold">
+
+        Loading...
+
+      </div>
+    );
+  }
+
+  // ================= RELATED VIDEOS =================
+
+  const relatedVideos =
+    courses.filter(
+      (item) =>
+        item.id !==
+        currentVideo.id
+    );
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-100">
 
-      {/* 🎥 VIDEO SECTION (TOP IN MOBILE) */}
+      {/* ================= VIDEO PLAYER ================= */}
+
       <div className="order-1 md:order-2 flex flex-col flex-1">
 
-        <div className="px-4 md:px-6 py-3 bg-white border-b flex justify-between items-center">
-          <h1 className="text-sm md:text-lg font-semibold truncate">
-            {currentVideo.title}
+        {/* TOPBAR */}
+        <div className="px-4 md:px-6 py-4 bg-white border-b flex justify-between items-center shadow-sm">
+
+          <h1 className="text-sm md:text-2xl font-bold truncate">
+
+            {
+              currentVideo.courseTitle
+            }
+
           </h1>
-          <span className="text-xs md:text-sm text-gray-500">
-            {currentIndex + 1}/{course.videos.length}
+
+          <span className="text-xs md:text-sm text-gray-500 font-medium">
+
+            Training Video
+
           </span>
         </div>
 
-        <div className="bg-black w-full h-[220px] sm:h-[300px] md:h-[75vh]">
+        {/* VIDEO */}
+        <div className="bg-black w-full h-[240px] sm:h-[340px] md:h-[78vh]">
+
           <iframe
-            key={currentVideo.youtubeId}
+            key={
+              currentVideo.videoLink
+            }
             className="w-full h-full"
-            src={`https://www.youtube.com/embed/${currentVideo.youtubeId}?rel=0`}
-            allow="encrypted-media"
+            src={`https://www.youtube.com/embed/${getYoutubeId(
+              currentVideo.videoLink
+            )}?autoplay=1&modestbranding=1&rel=0`}
+            title={
+              currentVideo.videoTitle
+            }
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
+
         </div>
 
-        <div className="px-4 md:px-6 py-3 bg-white border-t text-sm">
-          <h2 className="font-semibold">{currentVideo.title}</h2>
-          <p className="text-gray-500 text-xs mt-1">
-            Keep learning and complete the course.
+        {/* INFO */}
+        <div className="px-4 md:px-6 py-5 bg-white border-t">
+
+          <h2 className="font-bold text-xl">
+
+            {
+              currentVideo.videoTitle
+            }
+
+          </h2>
+
+          <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+
+            {
+              currentVideo.courseTitle
+            }
+
           </p>
-        </div>
 
+          {/* TAGS */}
+          <div className="flex flex-wrap gap-3 mt-4">
+
+            {currentVideo.tags?.map(
+              (tag, index) => (
+
+                <span
+                  key={index}
+                  className="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-xs font-semibold"
+                >
+
+                  {tag}
+
+                </span>
+              )
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* 📚 SIDEBAR (BOTTOM IN MOBILE, LEFT IN DESKTOP) */}
-      <div className="order-2 md:order-1 w-full md:w-96 bg-white border-t md:border-t-0 md:border-r">
+      {/* ================= SIDEBAR ================= */}
 
-        <div className="p-4 border-b">
-          <h2 className="text-base md:text-lg font-semibold">
-            {course.title}
+      <div className="order-2 md:order-1 w-full md:w-[380px] bg-white border-t md:border-t-0 md:border-r shadow-sm">
+
+        {/* HEADER */}
+        <div className="p-5 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+
+          <h2 className="text-xl md:text-2xl font-bold">
+
+            More Videos
+
           </h2>
-          <p className="text-xs md:text-sm text-gray-500">
-            {course.videos.length} lessons
+
+          <p className="text-sm text-blue-100 mt-1">
+
+            {
+              courses.length
+            } lessons available
+
           </p>
         </div>
 
-        <div className="p-3 space-y-3">
-          {course.videos.map((video, index) => (
-            <div
-              key={video.id}
-              onClick={() => setCurrentIndex(index)}
-              className={`flex gap-3 p-3 rounded-lg cursor-pointer ${
-                index === currentIndex
-                  ? "bg-blue-50 border border-blue-200"
-                  : "hover:bg-gray-100"
-              }`}
-            >
+        {/* VIDEO LIST */}
+        <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-100px)]">
+
+          {/* CURRENT VIDEO */}
+          <div
+            className="flex gap-3 p-3 rounded-2xl border bg-blue-50 border-blue-400 shadow-md"
+          >
+
+            {/* IMAGE */}
+            <div className="relative">
+
               <img
-                src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
-                className="w-24 h-14 object-cover rounded"
+                src={
+                  currentVideo.thumbnail ||
+                  `https://img.youtube.com/vi/${getYoutubeId(
+                    currentVideo.videoLink
+                  )}/mqdefault.jpg`
+                }
+                className="w-28 h-16 object-cover rounded-xl"
                 alt=""
               />
 
-              <div className="flex flex-col justify-between">
-                <p className="text-xs md:text-sm font-semibold line-clamp-2">
-                  {video.title}
-                </p>
-                <span className="text-[10px] md:text-xs text-gray-400">
-                  Lesson {index + 1}
-                </span>
+              <div className="absolute inset-0 flex items-center justify-center">
+
+                <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
+
+                  <span className="text-white text-sm ml-0.5">
+
+                    ▶
+
+                  </span>
+                </div>
               </div>
             </div>
-          ))}
+
+            {/* TEXT */}
+            <div className="flex flex-col justify-between flex-1">
+
+              <p className="text-sm font-semibold line-clamp-2 text-blue-700">
+
+                {
+                  currentVideo.videoTitle
+                }
+
+              </p>
+
+              <span className="text-xs text-gray-400">
+
+                Currently Playing
+
+              </span>
+            </div>
+          </div>
+
+          {/* RELATED VIDEOS */}
+          {relatedVideos.map(
+            (video, index) => (
+
+              <div
+                key={
+                  video.videoId ||
+                  index
+                }
+                onClick={() =>
+                  setCurrentVideo(video)
+                }
+                className="flex gap-3 p-3 rounded-2xl cursor-pointer transition-all duration-300 border bg-white hover:bg-gray-50 border-gray-200"
+              >
+
+                {/* THUMB */}
+                <div className="relative">
+
+                  <img
+                    src={
+                      video.thumbnail ||
+                      `https://img.youtube.com/vi/${getYoutubeId(
+                        video.videoLink
+                      )}/mqdefault.jpg`
+                    }
+                    className="w-28 h-16 object-cover rounded-xl"
+                    alt=""
+                  />
+
+                  <div className="absolute inset-0 flex items-center justify-center">
+
+                    <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center">
+
+                      <span className="text-white text-sm ml-0.5">
+
+                        ▶
+
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TEXT */}
+                <div className="flex flex-col justify-between flex-1">
+
+                  <p className="text-sm font-semibold line-clamp-2 text-gray-800">
+
+                    {
+                      video.videoTitle
+                    }
+
+                  </p>
+
+                  <span className="text-xs text-gray-400">
+
+                    Lesson {index + 2}
+
+                  </span>
+                </div>
+              </div>
+            )
+          )}
         </div>
-
       </div>
-
     </div>
   );
 };
