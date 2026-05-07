@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
-const WS_URL = "ws://localhost:8080/ws";
+const WS_URL = "https://athletearena-fitness-and-sports-services.onrender.com/ws";
 const ICE = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
