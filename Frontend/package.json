@@ -31,7 +31,6 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.13.0",
     "react-toastify": "^11.0.5",
-    "router-dom": "^3.0.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18",
     "video.js": "^8.23.7",
