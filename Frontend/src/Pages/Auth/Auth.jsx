@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Login from "./Login";
-import SignUp from "./SignUp";
 import ForgotPassword from "./ForgetForm";
+import SignUp from "./SignUp";
 
 
 export default function Auth() {
